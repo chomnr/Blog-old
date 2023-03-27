@@ -3,33 +3,23 @@ pub mod quik_utils;
 
 use api::services::{Service, User, ServiceInfo};
 use config::Config;
-use rocket::{launch, get, routes};
+use deadpool_postgres::{ManagerConfig, RecyclingMethod, Runtime};
+use rocket::{get};
+use tokio_postgres::NoTls;
+
+pub const SETTING_FILE: &str = "Settings";
 
 #[get("/")]
 fn hello() -> &'static str {
     "Hello, world!"
 }
 
-#[launch]
-fn rocket() -> _ {
-    let mut test = User::register(None);
-    
-    rocket::build().mount("/", routes![hello])
-}
-
-//pub const SETTING_FILE: &str = "Settings";
-
-/*
-#[tokio::main]
-async fn main() {
+#[rocket::main]
+async fn main() -> Result<(), rocket::Error>  {
     let settings = Config::builder()
         .add_source(config::File::with_name(SETTING_FILE))
         .build()
         .unwrap();
-    
-    let rouille_host: String = settings.get("rouille_host").unwrap();
-    let rouille_port: String = settings.get("rouille_port").unwrap();
-    let rouille_addr = format!("{}:{}", rouille_host, rouille_port);
 
     let postgres_host: String = settings.get("postgres_host").unwrap();
     let postgres_port: u16 = settings.get("postgres_port").unwrap();
@@ -46,45 +36,12 @@ async fn main() {
     postgres_config.manager = Some(ManagerConfig { recycling_method: RecyclingMethod::Fast });
 
     let postgres_pool = postgres_config.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
-    let postgres = postgres_pool.get().await.unwrap();
-    
-    /*
-        let manager = acc.manager(postgres_pool.await.unwrap());
-        let acc = Account::new("Paperdsasd", "harryd@gmail.com", "adsdsadsadsasdadsa");
-        manager.add_account().await.unwrap();
+    let conn = postgres_pool.get().await.unwrap();
 
-        let response = api::account::routes(&request, &postgres);
-        response
+    let mut user_service = User::register(None, conn);
+    let user_routes = user_service.routers().unwrap();
 
-    */
-    let sessions_storage: Mutex<HashMap<String, &SessionData>> = Mutex::new(HashMap::new());
+    rocket::build().mount("/", user_routes).launch().await.unwrap();
 
-    rouille::start_server(rouille_addr, move |request| {
-        rouille::log(&request, io::stdout(), || {
-            rouille::session::session(request, "SID", 3600, |session| {
-                let mut session_data = if session.client_has_sid() {
-                    if let Some(data) = sessions_storage.lock().unwrap().get(session.id()) {
-                        Some(data.clone())
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                };
-
-                let response = routes(&request, &postgres, &mut session_data);
-                if let Some(d) = session_data {
-                    sessions_storage
-                        .lock()
-                        .unwrap()
-                        .insert(session.id().to_owned(), d);
-                } else if session.client_has_sid() {
-    
-                    sessions_storage.lock().unwrap().remove(session.id());
-                }
-                response
-            })
-        })
-    });
+    Ok(())
 }
-*/

@@ -7,13 +7,20 @@ mod user_service;
 pub use user_service::{User};
 
 pub struct Service<T: ServiceInfo> {
-    info: Option<T>,
+    service: T, // have no clue what i was going to do with this...
     pub stats: ServiceStats,
-    routers: Option<Vec<Route>>
+    routers: Option<Vec<Route>>,
+    conn: deadpool_postgres::Object
+}
+
+impl<T: ServiceInfo> Service<T> {
+    pub fn routers(self) -> Option<Vec<Route>> {
+        self.routers
+    }
 }
 
 pub trait ServiceInfo {
-    fn register(routes: Option<Vec<Route>>) -> Service<Self> where Self: Sized;
+    fn register(routes: Option<Vec<Route>>, conn: deadpool_postgres::Object) -> Service<Self> where Self: Sized;
 }
 
 pub struct ServiceStats {
@@ -52,7 +59,6 @@ impl ServiceStats {
         if amount < 1 {
             println!("You cannot increment by a number that is less than 0.")
         }
-
         self.usage += amount;
         self.last_usage = SystemTime::now()
             .duration_since(UNIX_EPOCH)
