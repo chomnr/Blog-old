@@ -1,6 +1,7 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use log::{info, warn};
+use rouille::{Request, Response, router};
 
 use crate::quik_utils;
 
@@ -68,14 +69,13 @@ impl Manager {
         let client = &self.client;
 
         if acc.username.len() < Self::USERNAME_MIN {
-            println!("USERNAME TOO SMALL");
             return Err(AccountError::USERNAME_TOO_SHORT(acc.username.clone()));
         }
 
         if acc.username.len() > Self::USERNAME_MAX {
-            println!("USERNAME TOO BIG");
             return Err(AccountError::USERNAME_TOO_LONG(acc.username.clone()));
         }
+
         let sql = self
             .client
             .prepare(
@@ -117,12 +117,17 @@ impl Manager {
     }
 }
 
-/* SCHEMAS
-    CREATE TABLE IF NOT EXISTS accounts (
-        uid VARCHAR(255) PRIMARY KEY,
-        username VARCHAR(16) UNIQUE NOT NULL,
-        email VARCHAR(320) NOT NULL,
-        password_hash BYTEA NOT NULL,
-        password_salt BYTEA NOT NULL
-    );
-*/
+pub fn routes(request: &Request) -> Response {
+    router!(request, 
+        (POST) (/api/account/register) => {
+            Response::empty_404()
+        },
+        (POST) (/api/account/login) => {
+            Response::empty_404()
+        },
+        (GET) (/api/account/logout) => {
+            Response::empty_404()
+        },
+        _ => Response::empty_404()
+    )
+}

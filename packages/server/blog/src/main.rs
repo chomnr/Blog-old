@@ -39,17 +39,13 @@ async fn main() {
     let postgres_pool = postgres_config.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
 
     let postgres_pool = postgres_pool.get();
-    let acc = Account::new("Paper", "harry@gmail.com", "adsdsadsadsasdadsa");
+    let acc = Account::new("Paperdsasd", "harryd@gmail.com", "adsdsadsadsasdadsa");
     let manager = acc.manager(postgres_pool.await.unwrap());
 
     manager.add_account().await.unwrap();
 
     rouille::start_server(rouille_addr, move |request| {
-        router!(request,
-            (GET) (/) => {
-                rouille::Response::redirect_302("/hello/world")
-            },
-            _ => rouille::Response::empty_404()
-        )
+        let response = api::account::routes(&request);
+        response
     });
 }
