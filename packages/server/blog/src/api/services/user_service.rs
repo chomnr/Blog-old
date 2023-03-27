@@ -1,15 +1,39 @@
 use regex::Regex;
 use rocket::Route;
-use tokio_postgres::types::ToSql;
+use tokio_postgres::{types::ToSql, error::SqlState};
 
 use crate::{quik_utils::{quik_id, quik_hash}, api::error::AccountError};
 
 use super::{Service, ServiceInfo, ServiceStats};
 
+use argon2::{
+    password_hash::{
+        rand_core::OsRng,
+        PasswordHash, PasswordHasher, SaltString
+    },
+    Argon2
+};
+
 #[derive(Default)]
 struct UserPassword {
     hash: Box<[u8]>,
     salt: Box<[u8]>,
+}
+
+//todo: refractor
+impl UserPassword {
+    pub fn new(password: &str) -> Self {
+        let salt = Self::gen_salt();
+        let argon2 = Argon2::default();
+        let hash = argon2.hash_password(password.as_bytes(), salt.as_salt()).unwrap();
+        Self {
+            hash: hash.hash.unwrap().as_bytes().into(),
+            salt: salt.as_ref().as_bytes().into(),
+        }
+    }
+    fn gen_salt() -> SaltString {
+        SaltString::generate(&mut OsRng)
+    }
 }
 
 pub struct User {
@@ -49,6 +73,9 @@ impl Service<User> {
     pub const PASSWORD_MIN: usize = 7;
     pub const PASSWORD_REGEX: &str = r#"^.*[!@#$%^&*(),.?":{}|<>].*[0-9].*[A-Z].{5,}$"#; // look-around, including look-ahead and look-behind, is not supported.
 
+    // The designated identifier for the PostgreSQL table where all user information is stored.
+    pub const USER_TABLE: &str = "users";
+
     /// This function inserts a new user record directly into the PostgreSQL database.
     /// 
     /// # Arguments
@@ -68,7 +95,22 @@ impl Service<User> {
         Self::username_proc(username).unwrap();
         Self::password_proc(password).unwrap();
         Self::email_proc(email).unwrap();
-
+        // Converting the given password string of type 
+        // &str to an instance of UserPassword.
+        let password = UserPassword::new(password);
+        // Since a new account is being created, a unique identifier (UID) is required.
+        let uid = uuid::Uuid::new_v4().as_simple().to_string();
+        // Specifies the SQL statement that will be executed to perform the desired action.
+        let sql = format!("INSERT INTO {} (uid, username, email, password_hash, password_salt)  VALUES ($1, $2, $3, $4, $5)", Self::USER_TABLE);
+        // Executing the query. (this function is redundant i know.)
+        self.short_query(sql.as_str(), 
+            &[
+                &uid, 
+                &username, 
+                &email, 
+                &password.hash.as_ref(), 
+                &password.salt.as_ref()
+                ]).await.unwrap();
         Ok(())
     }
 
@@ -141,13 +183,27 @@ impl Service<User> {
     /// This function encapsulates the existing postgres query 
     /// to streamline the requisite procedures for executing 
     /// a query. 
-    async fn short_query(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<(), tokio_postgres::Error> where {
+    async fn short_query(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<(), AccountError> where {
         let conn = &self.conn;
         // Prepare the query.
         let statement = conn.prepare(sql).await.unwrap();
         // Execute query.
-        conn.query(&statement, params).await.unwrap();
-        Ok(())
+        match conn.query(&statement, params).await {
+            Ok(_) => Ok(()),
+            Err(er) => {
+                let code = er.code().unwrap();
+                if code.eq(&SqlState::UNIQUE_VIOLATION) {
+                    let message = er.as_db_error().unwrap().message();
+                    if message.contains("username") {
+                        return Err(AccountError::UsernameTaken)
+                    }
+                    if message.contains("email") {
+                        return Err(AccountError::EmailTaken)
+                    }
+                }
+                return Err(AccountError::UnknownError)
+            },
+        }
     }
 
     /*

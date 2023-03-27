@@ -40,7 +40,7 @@ async fn main() -> Result<(), rocket::Error>  {
 
     let mut user_service = User::register_service(None, conn);
 
-    user_service.create("Godly", "Doggys1", "dog@gmail.com").await.unwrap();
+    //user_service.create("Godldyd", "Doggys1", "dogsdds@gmail.com").await.unwrap();
     
     rocket::build().mount("/", routes![hello]).launch().await.unwrap();
 

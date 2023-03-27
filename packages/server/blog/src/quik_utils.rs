@@ -9,7 +9,7 @@ use argon2::{
     Argon2
 };
 
-/* MAKING ARGON2 HIGHER LEVEL. */
+/* MAKING ARGON2 HIGHER LEVEL. make cleaner. implement into UserPassword not here...*/
 pub fn quik_hash(password: &str) -> (Box<[u8]>, Box<[u8]>) {
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
