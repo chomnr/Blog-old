@@ -4,7 +4,7 @@ pub mod quik_utils;
 use api::services::{Service, User, ServiceInfo};
 use config::Config;
 use deadpool_postgres::{ManagerConfig, RecyclingMethod, Runtime};
-use rocket::{get};
+use rocket::{get, routes};
 use tokio_postgres::NoTls;
 
 pub const SETTING_FILE: &str = "Settings";
@@ -38,10 +38,9 @@ async fn main() -> Result<(), rocket::Error>  {
     let postgres_pool = postgres_config.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
     let conn = postgres_pool.get().await.unwrap();
 
-    let mut user_service = User::register(None, conn);
-    let user_routes = user_service.routers().unwrap();
+    let mut user_service = User::register_service(None, conn);
 
-    rocket::build().mount("/", user_routes).launch().await.unwrap();
+    rocket::build().mount("/", routes![hello]).launch().await.unwrap();
 
     Ok(())
 }

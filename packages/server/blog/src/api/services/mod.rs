@@ -7,7 +7,8 @@ mod user_service;
 pub use user_service::{User};
 
 pub struct Service<T: ServiceInfo> {
-    service: T, // have no clue what i was going to do with this...
+    #[deprecated]
+    service: T,
     pub stats: ServiceStats,
     routers: Option<Vec<Route>>,
     conn: deadpool_postgres::Object
@@ -20,7 +21,7 @@ impl<T: ServiceInfo> Service<T> {
 }
 
 pub trait ServiceInfo {
-    fn register(routes: Option<Vec<Route>>, conn: deadpool_postgres::Object) -> Service<Self> where Self: Sized;
+    fn register_service(routes: Option<Vec<Route>>, conn: deadpool_postgres::Object) -> Service<Self> where Self: Sized;
 }
 
 pub struct ServiceStats {
