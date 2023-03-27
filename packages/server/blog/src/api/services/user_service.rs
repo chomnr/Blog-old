@@ -1,5 +1,6 @@
 use regex::Regex;
 use rocket::Route;
+use tokio_postgres::types::ToSql;
 
 use crate::{quik_utils::{quik_id, quik_hash}, api::error::AccountError};
 
@@ -134,6 +135,18 @@ impl Service<User> {
         if !pattern.is_match(email) {
             return Err(AccountError::EmailViolation);
         }
+        Ok(())
+    }
+
+    /// This function encapsulates the existing postgres query 
+    /// to streamline the requisite procedures for executing 
+    /// a query. 
+    async fn short_query(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<(), tokio_postgres::Error> where {
+        let conn = &self.conn;
+        // Prepare the query.
+        let statement = conn.prepare(sql).await.unwrap();
+        // Execute query.
+        conn.query(&statement, params).await.unwrap();
         Ok(())
     }
 
