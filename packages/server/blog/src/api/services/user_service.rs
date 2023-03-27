@@ -2,7 +2,7 @@ use regex::Regex;
 use rocket::Route;
 use tokio_postgres::{types::ToSql, error::SqlState};
 
-use crate::{quik_utils::{quik_id, quik_hash}, api::error::AccountError};
+use crate::api::error::AccountError;
 
 use super::{Service, ServiceInfo, ServiceStats};
 
@@ -90,7 +90,7 @@ impl Service<User> {
     /// let mut user_service = User::register_service(None, conn);
     /// user_service.create("JohnDoe", "DoeFarmer123", "JohnDoe@gmail.com");
     /// ```
-    pub async fn create(&self, username: &str, password: &str, email: &str) -> Result<(), AccountError> {
+    pub async fn create(&mut self, username: &str, password: &str, email: &str) -> Result<(), AccountError> {
         // Calling the procedures and or constraints.
         Self::username_proc(username).unwrap();
         Self::password_proc(password).unwrap();
@@ -102,7 +102,7 @@ impl Service<User> {
         let uid = uuid::Uuid::new_v4().as_simple().to_string();
         // Specifies the SQL statement that will be executed to perform the desired action.
         let sql = format!("INSERT INTO {} (uid, username, email, password_hash, password_salt)  VALUES ($1, $2, $3, $4, $5)", Self::USER_TABLE);
-        // Executing the query. (this function is redundant i know.)
+        // Executing the query.
         self.short_query(sql.as_str(), 
             &[
                 &uid, 
@@ -146,7 +146,7 @@ impl Service<User> {
     /// length. If the password does not meet these criteria, it 
     /// will return an AccountError with the specific error type 
     /// of PasswordViolation. (Does not support 1 special character currently)
-    pub fn password_proc(password: &str) -> Result<(), AccountError> {
+    fn password_proc(password: &str) -> Result<(), AccountError> {
         // Verifies whether the length of the password is 
         // below the prescribed minimum.
         if password.len() < Self::PASSWORD_MIN {
@@ -183,13 +183,16 @@ impl Service<User> {
     /// This function encapsulates the existing postgres query 
     /// to streamline the requisite procedures for executing 
     /// a query. 
-    async fn short_query(&self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<(), AccountError> where {
+    async fn short_query(&mut self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<(), AccountError> where {
         let conn = &self.conn;
         // Prepare the query.
         let statement = conn.prepare(sql).await.unwrap();
         // Execute query.
         match conn.query(&statement, params).await {
-            Ok(_) => Ok(()),
+            Ok(_) => {
+                self.stats.add_usage(1); // Add that the class was used.
+                Ok(())
+            },
             Err(er) => {
                 let code = er.code().unwrap();
                 if code.eq(&SqlState::UNIQUE_VIOLATION) {
@@ -205,22 +208,4 @@ impl Service<User> {
             },
         }
     }
-
-    /*
-    pub fn read(){}
-    pub fn update(){}
-    pub fn delete(){}
-    */
 }
-
-/*
-let password = quik_hash(password);
-        
-        let to_make = User {
-            uid: uuid::Uuid::new_v4().as_simple().to_string(),
-            username: username.to_string(),
-            password: UserPassword { hash: password.0, salt: password.1 },
-            email: email.to_string(),
-        };
-
- */

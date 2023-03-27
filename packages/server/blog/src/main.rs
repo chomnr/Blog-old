@@ -1,5 +1,4 @@
 mod api;
-pub mod quik_utils;
 
 use api::services::{Service, User, ServiceInfo};
 use config::Config;
