@@ -1,4 +1,4 @@
-use std::{default, time::{SystemTime, UNIX_EPOCH}};
+use std::{default, time::{SystemTime, UNIX_EPOCH}, collections::HashMap};
 
 use rocket::Route;
 
@@ -6,24 +6,26 @@ use rocket::Route;
 mod user_service;
 pub use user_service::{User};
 
+#[derive(Clone)]
 pub struct Service<T: ServiceInfo> {
     #[deprecated]
     service: T,
     pub stats: ServiceStats,
-    routers: Option<Vec<Route>>,
-    conn: deadpool_postgres::Object
+    routes: Vec<Route>,
+    pool: deadpool_postgres::Pool
 }
 
 impl<T: ServiceInfo> Service<T> {
-    pub fn routers(self) -> Option<Vec<Route>> {
-        self.routers
+    pub fn routes(&self) -> &Vec<Route> {
+        &self.routes
     }
 }
 
 pub trait ServiceInfo {
-    fn register_service(routes: Option<Vec<Route>>, conn: deadpool_postgres::Object) -> Service<Self> where Self: Sized;
+    fn register_service(conn: deadpool_postgres::Pool) -> Service<Self> where Self: Sized;
 }
 
+#[derive(Clone)]
 pub struct ServiceStats {
     name: String,
     usage: u64,

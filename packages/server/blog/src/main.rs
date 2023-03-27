@@ -1,9 +1,11 @@
 mod api;
 
-use api::services::{Service, User, ServiceInfo};
+use std::sync::Arc;
+
+use api::{services::{Service, User, ServiceInfo}, routes::user_routes};
 use config::Config;
 use deadpool_postgres::{ManagerConfig, RecyclingMethod, Runtime};
-use rocket::{get, routes};
+use rocket::{get, routes, Route, futures::lock::Mutex};
 use tokio_postgres::NoTls;
 
 pub const SETTING_FILE: &str = "Settings";
@@ -19,29 +21,22 @@ async fn main() -> Result<(), rocket::Error>  {
         .add_source(config::File::with_name(SETTING_FILE))
         .build()
         .unwrap();
-
-    let postgres_host: String = settings.get("postgres_host").unwrap();
-    let postgres_port: u16 = settings.get("postgres_port").unwrap();
-    let postgres_username: String = settings.get("postgres_username").unwrap();
-    let postgres_password: String = settings.get("postgres_password").unwrap();
-    let postgres_database: String = settings.get("postgres_database").unwrap();
-
     let mut postgres_config = deadpool_postgres::Config::new();
-    postgres_config.host = Some(postgres_host);
-    postgres_config.port = Some(postgres_port);
-    postgres_config.user = Some(postgres_username);
-    postgres_config.password = Some(postgres_password);
-    postgres_config.dbname = Some(postgres_database);
+    postgres_config.host = Some(settings.get("postgres_host").unwrap());
+    postgres_config.port = Some(settings.get("postgres_port").unwrap());
+    postgres_config.user = Some(settings.get("postgres_username").unwrap());
+    postgres_config.password = Some(settings.get("postgres_password").unwrap());
+    postgres_config.dbname = Some(settings.get("postgres_database").unwrap());
     postgres_config.manager = Some(ManagerConfig { recycling_method: RecyclingMethod::Fast });
+    let pool = postgres_config.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
+    //let conn = postgres_pool.get().await.unwrap();
 
-    let postgres_pool = postgres_config.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
-    let conn = postgres_pool.get().await.unwrap();
-
-    let mut user_service = User::register_service(None, conn);
-
-    //user_service.create("Godldyd", "Doggys1", "dogsdds@gmail.com").await.unwrap();
+    let user_service = Mutex::new(User::register_service(pool));
+    let user_routes = user_service.lock().await.routes().to_vec();
     
-    rocket::build().mount("/", routes![hello]).launch().await.unwrap();
+    rocket::build()
+    .mount("/api/user", user_routes).manage(user_service)
+    .launch().await.unwrap();
 
     Ok(())
 }

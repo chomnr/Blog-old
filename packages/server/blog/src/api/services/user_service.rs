@@ -2,7 +2,7 @@ use regex::Regex;
 use rocket::Route;
 use tokio_postgres::{types::ToSql, error::SqlState};
 
-use crate::api::error::AccountError;
+use crate::api::{error::AccountError, routes::user_routes};
 
 use super::{Service, ServiceInfo, ServiceStats};
 
@@ -44,7 +44,7 @@ pub struct User {
 }
 
 impl ServiceInfo for User {
-    fn register_service(routes: Option<Vec<Route>>, conn: deadpool_postgres::Object) -> Service<Self> {
+    fn register_service(pool: deadpool_postgres::Pool) -> Service<Self> {
         Service {
             service: Self {
                 uid: String::default(),
@@ -53,8 +53,8 @@ impl ServiceInfo for User {
                 email: String::default(),
             },
             stats: ServiceStats::default(),
-            routers: routes,
-            conn,
+            routes: user_routes::routes(),
+            pool,
         }
     }
 }
@@ -62,19 +62,19 @@ impl ServiceInfo for User {
 impl Service<User> {
 
     // Username Constraints
-    pub const USERNAME_MAX: usize = 16;
-    pub const USERNAME_MIN: usize = 3;
-    pub const USERNAME_REGEX: &str = r"^[a-zA-Z0-9_]+$";
+    const USERNAME_MAX: usize = 16;
+    const USERNAME_MIN: usize = 3;
+    const USERNAME_REGEX: &str = r"^[a-zA-Z0-9_]+$";
 
     // Email Constraints
-    pub const EMAIL_REGEX: &str = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+    const EMAIL_REGEX: &str = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
 
     // Password Constrant | 1 Capital Letter, 1 Digit, 1 Special Character ( At least ).
-    pub const PASSWORD_MIN: usize = 7;
-    pub const PASSWORD_REGEX: &str = r#"^.*[!@#$%^&*(),.?":{}|<>].*[0-9].*[A-Z].{5,}$"#; // look-around, including look-ahead and look-behind, is not supported.
+    const PASSWORD_MIN: usize = 7;
+    const PASSWORD_REGEX: &str = r#"^.*[!@#$%^&*(),.?":{}|<>].*[0-9].*[A-Z].{5,}$"#; // look-around, including look-ahead and look-behind, is not supported.
 
     // The designated identifier for the PostgreSQL table where all user information is stored.
-    pub const USER_TABLE: &str = "users";
+    const USER_TABLE: &str = "users";
 
     /// This function inserts a new user record directly into the PostgreSQL database.
     /// 
@@ -184,7 +184,7 @@ impl Service<User> {
     /// to streamline the requisite procedures for executing 
     /// a query. 
     async fn short_query(&mut self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<(), AccountError> where {
-        let conn = &self.conn;
+        let conn = &self.pool.get().await.unwrap();
         // Prepare the query.
         let statement = conn.prepare(sql).await.unwrap();
         // Execute query.
