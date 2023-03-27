@@ -4,6 +4,7 @@ use std::{fmt, cmp::min};
 pub enum AccountError {
     UsernameViolation,
     EmailViolation,
+    PasswordViolation,
     RegistrationFailed,
 }
 
@@ -12,6 +13,7 @@ impl fmt::Display for AccountError {
         match self {
             AccountError::UsernameViolation => write!(f, "The specified username violates the format requirements"),
             AccountError::EmailViolation => write!(f, "The specified email address violates the format requirements."),
+            AccountError::PasswordViolation => write!(f, "The specified password violates the format requirements"),
             AccountError::RegistrationFailed => write!(f, "Account registration failed due to an unknown error. Please try again later."),
         }
     }

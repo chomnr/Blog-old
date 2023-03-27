@@ -39,7 +39,14 @@ impl Service<User> {
     // Username Constraints
     pub const USERNAME_MAX: usize = 16;
     pub const USERNAME_MIN: usize = 3;
-    pub const USERNAME_REGEX: &str = "^[A-Za-z0-9_]+$";
+    pub const USERNAME_REGEX: &str = r"^[A-Za-z0-9_]+$";
+
+    // Email Constraints
+    pub const EMAIL_REGEX: &str = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+
+    // Password Constrant | 1 Capital Letter, 1 Digit, 1 Special Character ( At least ).
+    pub const PASSWORD_MIN: usize = 7;
+    pub const PASSWORD_REGEX: &str = r#"^(?=.*[!@#$%^&*(),.?":{}|<>])(?=.*[0-9])(?=.*[A-Z]).{8,}$"#;
 
     /// This function creates a user row inside Postgres.
     /// 
@@ -64,7 +71,7 @@ impl Service<User> {
     /// and regular expression pattern matching. If the input 
     /// string does not satisfy these criteria, the function 
     /// returns an AccountError object with the specific error 
-    /// message UsernameViolation.
+    /// UsernameViolation.
     fn username_proc(username: &str) -> Result<(), AccountError> {
         // Verifies whether the length of the username is 
         // below the prescribed minimum.
@@ -81,6 +88,42 @@ impl Service<User> {
         let pattern = Regex::new(Self::USERNAME_REGEX).unwrap();
         if pattern.is_match(username) {
             return Err(AccountError::UsernameViolation);
+        }
+        Ok(())
+    }
+
+    /// This function verifies whether the given email string 
+    /// conforms to the required regular expression pattern. 
+    /// If the email does not comply with the pattern, the 
+    /// function returns an AccountError with the specific 
+    /// error type of EmailViolation.
+    fn email_proc(email: &str) -> Result<(), AccountError> {
+        // Validates the email against the defined EMAIL_REGEX 
+        // pattern to ensure its compliance.
+        let pattern = Regex::new(Self::EMAIL_REGEX).unwrap();
+        if pattern.is_match(email) {
+            return Err(AccountError::EmailViolation);
+        }
+        Ok(())
+    }
+
+    /// This function is responsible for validating the user's 
+    /// password, ensuring that it adheres to the specific pattern 
+    /// defined by a regular expression, and meets the required 
+    /// length. If the password does not meet these criteria, it 
+    /// will return an AccountError with the specific error type 
+    /// of PasswordViolation.
+    pub fn password_proc(password: &str) -> Result<(), AccountError> {
+        // Verifies whether the length of the password is 
+        // below the prescribed minimum.
+        if password.len() < Self::PASSWORD_MIN {
+            return Err(AccountError::PasswordViolation)
+        }
+        // Validates the password against the defined PASSWORD_REGEX 
+        // pattern to ensure its compliance.
+        let pattern = Regex::new(Self::EMAIL_REGEX).unwrap();
+        if pattern.is_match(password) {
+            return Err(AccountError::PasswordViolation)
         }
         Ok(())
     }
