@@ -8,6 +8,7 @@ pub enum AccountError {
     UsernameTaken,
     EmailTaken,
     RegistrationFailed,
+    LoginFailed,
     UnknownError
 }
 
@@ -20,6 +21,7 @@ impl fmt::Display for AccountError {
             AccountError::UsernameTaken => write!(f, "The specified username is already taken."),
             AccountError::EmailTaken => write!(f, "The specified email is already taken."),
             AccountError::RegistrationFailed => write!(f, "Account registration failed due to an unknown error. Please try again later."),
+            AccountError::LoginFailed => write!(f, "Login failed due to an unknown error. Please try again later."),
             AccountError::UnknownError => write!(f, "This error is unknown to the world."),
         }
     }

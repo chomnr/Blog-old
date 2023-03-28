@@ -54,11 +54,14 @@ async fn main() -> Result<(), rocket::Error>  {
     postgres_config.manager = Some(ManagerConfig { recycling_method: RecyclingMethod::Fast });
     let pool = postgres_config.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
     //let conn = postgres_pool.get().await.unwrap();
-    
+
     let user_service = Mutex::new(User::register_service(pool));
+    //user_service.lock().await.create("Hoar", "Hoar123", "hoar@gmail.com").await.unwrap();
+    //user_service.lock().await.create("Doggy", "Doggy123!", "dog@gmail.com").await.unwrap();
+    //user_service.lock().await.create("Doggy1", "Doggy123!1", "Doggy1@gmail.com").await.unwrap();
+    user_service.lock().await.login("Doggy1", "Doggy123!1").await.unwrap();
     let user_routes = user_service.lock().await.routes().to_vec();
     
-
     rocket::build()
     .mount("/api/user", user_routes).manage(user_service).attach(CORS).launch().await.unwrap();
 

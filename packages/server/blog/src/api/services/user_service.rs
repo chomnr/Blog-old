@@ -1,38 +1,33 @@
+use argon2::{
+    password_hash::{
+        rand_core::OsRng,
+        PasswordHash, PasswordHasher, PasswordVerifier, SaltString
+    },
+    Argon2
+};
+use rand::Rng;
 use regex::Regex;
 use rocket::Route;
-use tokio_postgres::{types::ToSql, error::SqlState};
+use tokio_postgres::{types::ToSql, error::SqlState, Row};
 
 use crate::api::{error::AccountError, routes::user_routes};
 
 use super::{Service, ServiceInfo, ServiceStats};
 
-use argon2::{
-    password_hash::{
-        rand_core::OsRng,
-        PasswordHash, PasswordHasher, SaltString
-    },
-    Argon2
-};
-
 #[derive(Default)]
 struct UserPassword {
-    hash: Box<[u8]>,
-    salt: Box<[u8]>,
+    hash: String
 }
 
 //todo: refractor
 impl UserPassword {
     pub fn new(password: &str) -> Self {
-        let salt = Self::gen_salt();
         let argon2 = Argon2::default();
-        let hash = argon2.hash_password(password.as_bytes(), salt.as_salt()).unwrap();
+        let salt = SaltString::generate(&mut OsRng);
+        let password_hash = argon2.hash_password(password.as_bytes(), &salt).unwrap().to_string();
         Self {
-            hash: hash.hash.unwrap().as_bytes().into(),
-            salt: salt.as_ref().as_bytes().into(),
+            hash: password_hash.to_string(),
         }
-    }
-    fn gen_salt() -> SaltString {
-        SaltString::generate(&mut OsRng)
     }
 }
 
@@ -101,17 +96,78 @@ impl Service<User> {
         // Since a new account is being created, a unique identifier (UID) is required.
         let uid = uuid::Uuid::new_v4().as_simple().to_string();
         // Specifies the SQL statement that will be executed to perform the desired action.
-        let sql = format!("INSERT INTO {} (uid, username, email, password_hash, password_salt)  VALUES ($1, $2, $3, $4, $5)", Self::USER_TABLE);
+        let sql = format!("INSERT INTO {} (uid, username, email, password_hash)  VALUES ($1, $2, $3, $4)", Self::USER_TABLE);
         // Executing the query.
         self.short_query(sql.as_str(), 
             &[
                 &uid, 
                 &username, 
                 &email, 
-                &password.hash.as_ref(), 
-                &password.salt.as_ref()
+                &password.hash, 
                 ]).await.unwrap();
         Ok(())
+    }
+
+    /// This function implements an authentication mechanism that determines the validity of 
+    /// user credentials, and thus determines the access control decision for allowing or 
+    /// denying login into a user account.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `login` - Desired username or email.
+    /// * `password` - Desired password.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// let mut user_service = User::register_service(None, conn);
+    /// user_service.login("JohnDoe", "DoeFarmer123");
+    /// ```
+    pub async fn login(&mut self, login: &str, password: &str) -> Result<(), AccountError> {
+        // Getting Postgres object.
+        let conn = &self.pool.get().await.unwrap();
+        // Deciding whether 'login' is a email or username.
+        let method = Self::login_method(login);
+        // Preparing query.
+        let sql = format!("SELECT * from {} WHERE {} = $1", Self::USER_TABLE, method);
+        let statement = conn.prepare(&sql).await.unwrap();
+        // Execute query.
+        match conn.query(&statement, &[&login]).await {
+            Ok(v) => {
+                if v.len() == 0 {
+                    return Err(AccountError::LoginFailed);
+                }
+                let hash: String = v[0].get(3);
+                let password_hash = argon2::PasswordHash::new(hash.as_str()).unwrap();
+                let is_correct = Argon2::default().verify_password(password.as_bytes(), &password_hash).is_ok();
+                if is_correct {
+                    // return cookie?
+                } else {
+                    // dont return shit?
+                }
+                Ok(())
+            },
+            Err(_) => {
+                Err(AccountError::UnknownError)
+            },
+        }
+        
+    }
+
+    /// The function determines the appropriate login method based 
+    /// on the input string by comparing it to an email pattern. 
+    /// If the input string does not match the email pattern, 
+    /// it is considered a username.
+    pub fn login_method(login: &str) -> &str {
+        let pattern = Regex::new(Self::EMAIL_REGEX).unwrap();
+        // Based on the pattern of the given string, 
+        // if it does not match the structure of an 
+        // email, it is determined to be a username.
+        if pattern.is_match(login) {
+            return "EMAIL"
+        } else {
+            return "USERNAME"
+        }
     }
 
     /// Validates the input string as a username by performing 
@@ -183,15 +239,15 @@ impl Service<User> {
     /// This function encapsulates the existing postgres query 
     /// to streamline the requisite procedures for executing 
     /// a query. 
-    async fn short_query(&mut self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<(), AccountError> where {
+    async fn short_query(&mut self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<Row>, AccountError> where {
         let conn = &self.pool.get().await.unwrap();
         // Prepare the query.
         let statement = conn.prepare(sql).await.unwrap();
         // Execute query.
         match conn.query(&statement, params).await {
-            Ok(_) => {
+            Ok(v) => {
                 self.stats.add_usage(1); // Add that the class was used.
-                Ok(())
+                Ok(v)
             },
             Err(er) => {
                 let code = er.code().unwrap();
