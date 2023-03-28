@@ -52,10 +52,10 @@ async fn main() -> Result<(), rocket::Error>  {
     postgres_config.password = Some(settings.get("postgres_password").unwrap());
     postgres_config.dbname = Some(settings.get("postgres_database").unwrap());
     postgres_config.manager = Some(ManagerConfig { recycling_method: RecyclingMethod::Fast });
-    let pool = postgres_config.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
+    let pool = Arc::new(postgres_config.create_pool(Some(Runtime::Tokio1), NoTls).unwrap());
     //let conn = postgres_pool.get().await.unwrap();
 
-    let user_service = Mutex::new(User::register_service(pool));
+    let user_service = Mutex::new(User::register_service(pool.clone()));
     //user_service.lock().await.create("Hoar", "Hoar123", "hoar@gmail.com").await.unwrap();
     //user_service.lock().await.create("Doggy", "Doggy123!", "dog@gmail.com").await.unwrap();
     //user_service.lock().await.create("Doggy1", "Doggy123!1", "Doggy1@gmail.com").await.unwrap();

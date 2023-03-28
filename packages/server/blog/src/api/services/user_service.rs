@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use argon2::{
     password_hash::{
         rand_core::OsRng,
@@ -38,17 +40,19 @@ pub struct User {
     email: String
 }
 
+pub struct UserSession {
+    sid: String,
+    uid: String,
+    username: String,
+    email: String
+}
+
 impl ServiceInfo for User {
-    fn register_service(pool: deadpool_postgres::Pool) -> Service<Self> {
+    fn register_service(pool: Arc<deadpool_postgres::Pool>) -> Service<Self> {
         Service {
-            service: Self {
-                uid: String::default(),
-                username: String::default(),
-                password: UserPassword::default(),
-                email: String::default(),
-            },
+            service: None,
             stats: ServiceStats::default(),
-            routes: user_routes::routes(),
+            routes: Some(user_routes::routes()),
             pool,
         }
     }
@@ -145,6 +149,9 @@ impl Service<User> {
         }
     }
 
+    fn session_create(){}
+    fn session_revoke(){}
+
     /// The function "verify_password" performs a password 
     /// comparison operation to determine whether the provided 
     /// password is equivalent to the target password. If the 
@@ -220,6 +227,11 @@ impl Service<User> {
         // below the prescribed minimum.
         if password.len() < Self::PASSWORD_MIN {
             return Err(AccountError::PasswordViolation)
+        }
+        // Verifies whether the length of the username exceeds 
+        // the permissible maximum value.
+        if password.len() > argon2::MAX_PWD_LEN {
+            return  Err(AccountError::PasswordViolation);
         }
         // Verifies whether password contains at least
         // one UPPERCASE letter.
