@@ -134,24 +134,37 @@ impl Service<User> {
         // Execute query.
         match conn.query(&statement, &[&login]).await {
             Ok(v) => {
-                if v.len() == 0 {
-                    return Err(AccountError::LoginFailed);
-                }
-                let hash: String = v[0].get(3);
-                let password_hash = argon2::PasswordHash::new(hash.as_str()).unwrap();
-                let is_correct = Argon2::default().verify_password(password.as_bytes(), &password_hash).is_ok();
-                if is_correct {
-                    // return cookie?
-                } else {
-                    // dont return shit?
-                }
+                if v.len() == 0 { return Err(AccountError::LoginFailed); }
+                let target: &str = v[0].get(3);
+                Self::password_verify(password, target).unwrap();
                 Ok(())
             },
             Err(_) => {
                 Err(AccountError::UnknownError)
             },
         }
-        
+    }
+
+    /// The function "verify_password" performs a password 
+    /// comparison operation to determine whether the provided 
+    /// password is equivalent to the target password. If the 
+    /// comparison yields a match, the function returns a 
+    /// boolean value of true. However, if the comparison 
+    /// fails, the function raises an AccountError with the 
+    /// specific error LoginFailed, indicating that the 
+    /// password verification process was unsuccessful.
+    fn password_verify(password: &str, target: &str) -> Result<bool, AccountError> {
+        // Default Argon2 configuration.
+        let argon2 = Argon2::default();
+        // PasswordHash of target password.
+        let target_hash = argon2::PasswordHash::new(target).unwrap();
+        // Checks if password == Target.
+        let check = argon2.verify_password(password.as_bytes(), &target_hash).is_ok();
+        // If false return AccountError LoginFailed
+        if !check {
+            return Err(AccountError::LoginFailed);
+        }
+        Ok(true)
     }
 
     /// The function determines the appropriate login method based 
