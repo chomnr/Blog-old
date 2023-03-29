@@ -103,13 +103,18 @@ impl Service<User> {
         // Specifies the SQL statement that will be executed to perform the desired action.
         let sql = format!("INSERT INTO {} (uid, username, email, password_hash)  VALUES ($1, $2, $3, $4)", Self::USER_TABLE);
         // Executing the query.
-        self.short_query(sql.as_str(), 
+        let short_query = self.short_query(sql.as_str(), 
             &[
                 &uid, 
                 &username, 
                 &email, 
                 &password.hash, 
-                ]).await.unwrap();
+                ]).await;
+        if short_query.is_err() {
+            return Err(
+                AccountError::error_parse(short_query.err().unwrap()
+            ))
+        }
         Ok(())
     }
 
@@ -299,7 +304,7 @@ impl Service<User> {
     /// This function encapsulates the existing postgres query 
     /// to streamline the requisite procedures for executing 
     /// a query. 
-    async fn short_query(&mut self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<Row>, AccountError> where {
+    async fn short_query(&mut self, sql: &str, params: &[&(dyn ToSql + Sync)]) -> Result<Vec<Row>, tokio_postgres::Error> {
         let conn = &self.pool.get().await.unwrap();
         // Prepare the query.
         let statement = conn.prepare(sql).await.unwrap();
@@ -310,6 +315,14 @@ impl Service<User> {
                 Ok(v)
             },
             Err(er) => {
+                return Err(er)
+            },
+        }
+    }
+}
+
+/*
+ Err(er) => {
                 let code = er.code().unwrap();
                 if code.eq(&SqlState::UNIQUE_VIOLATION) {
                     let message = er.as_db_error().unwrap().message();
@@ -322,6 +335,4 @@ impl Service<User> {
                 }
                 return Err(AccountError::UnknownError)
             },
-        }
-    }
-}
+ */
