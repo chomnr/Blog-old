@@ -1,5 +1,7 @@
 use std::{fmt, cmp::min};
 
+use tokio_postgres::error::SqlState;
+
 #[derive(Debug)]
 pub enum AccountError {
     UsernameViolation,
@@ -24,5 +26,22 @@ impl fmt::Display for AccountError {
             AccountError::LoginFailed => write!(f, "Login failed due to an unknown error. Please try again later."),
             AccountError::UnknownError => write!(f, "This error is unknown to the world."),
         }
+    }
+}
+
+
+impl AccountError {
+    pub fn error_parse(er: tokio_postgres::Error) -> AccountError {
+        let code = er.code().unwrap();
+        if code.eq(&SqlState::UNIQUE_VIOLATION) {
+            let message = er.as_db_error().unwrap().message();
+            if message.contains("username") {
+                return AccountError::UsernameTaken
+            }
+            if message.contains("email") {
+                return AccountError::EmailTaken
+            }
+        }
+        return AccountError::UnknownError
     }
 }
