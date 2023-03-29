@@ -30,7 +30,9 @@ async fn create_account(post_data: Json<CreateUser>, user: &State<Mutex<Service<
 
 #[post("/login", format = "json", data = "<post_data>")]
 async fn login_account(post_data: Json<LoginUser>, user: &State<Mutex<Service<User>>>) -> Result<Redirect, ()> {
-    //let create = user.lock().await.login(login, password)
+    let login = post_data.0.login.as_str();
+    let password = post_data.0.password.as_str();
+    let create = user.lock().await.login(login, password).await;
     // add messages...
     match create {
         Ok(v) => Ok(Redirect::to("/")), //todo
