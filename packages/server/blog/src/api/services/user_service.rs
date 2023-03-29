@@ -74,7 +74,7 @@ impl Service<User> {
     const USER_TABLE: &str = "users";
 
     // Session Duration
-    const SESSION_DURATION: usize = 604800000; // (7 Days)
+    const SESSION_DURATION: i64 = 604800000; // (7 Days)
 
     /// This function inserts a new user record directly into the PostgreSQL database.
     /// 
@@ -174,7 +174,7 @@ impl Service<User> {
         let expires_on = SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
-            .as_millis() as i64;
+            .as_millis() as i64 + Self::SESSION_DURATION;
         // The UserSession object.
         let user_session = UserSession { 
             sid: sid.to_string(),
