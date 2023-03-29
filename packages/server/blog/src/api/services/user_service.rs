@@ -128,7 +128,7 @@ impl Service<User> {
     /// let mut user_service = User::register_service(None, conn);
     /// user_service.login("JohnDoe", "DoeFarmer123");
     /// ```
-    pub async fn login(&mut self, login: &str, password: &str) -> Result<(), AccountError> {
+    pub async fn login(&mut self, login: &str, password: &str) -> Result<UserSession, AccountError> {
         // Getting Postgres object.
         let conn = &self.pool.get().await.unwrap();
         // Deciding whether 'login' is a email or username.
@@ -144,8 +144,7 @@ impl Service<User> {
                 let email: String = v[0].get(2);
                 let target: &str = v[0].get(3);
                 Self::password_verify(password, target).unwrap();
-                self.session_make(uid.as_str(), username.as_str(), email.as_str()).await.unwrap();
-                Ok(())
+                Ok(self.session_make(uid.as_str(), username.as_str(), email.as_str()).await.unwrap())
             },
             Err(_) => {
                 return Err(AccountError::UnknownError)
@@ -154,7 +153,7 @@ impl Service<User> {
     }
 
     /// creates session id inside sessions table then creates a cookie...
-    async fn session_make(&mut self, uid: &str, username: &str, email: &str) -> Result<Cookie, AccountError> {
+    async fn session_make(&mut self, uid: &str, username: &str, email: &str) -> Result<UserSession, AccountError> {
         // Simple query insert if session does already 
         // exist if it does update it.
         let sql = "
@@ -182,12 +181,7 @@ impl Service<User> {
         // Execute query.
         match self.short_query(sql, &[&uid, &sid, &expires_on]).await {
             Ok(_) => {
-               let cookie = Cookie::build("sid", serde_json::to_string(&user_session)
-                    .unwrap())
-                    .expires(Expiration::DateTime(OffsetDateTime::now_utc().saturating_add(Duration::days(7))))
-                    .same_site(SameSite::None)
-                    .finish();
-               Ok(cookie)
+               Ok(user_session)
             },
             Err(_) => Err(AccountError::UnknownError),
         }
