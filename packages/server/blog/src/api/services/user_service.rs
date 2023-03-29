@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::{SystemTime, self}};
 
 use argon2::{
     password_hash::{
@@ -9,7 +9,7 @@ use argon2::{
 };
 use rand::Rng;
 use regex::Regex;
-use rocket::Route;
+use rocket::{Route, http::{Cookie, SameSite, private::cookie::Expiration}, serde::{self, Deserialize, Serialize}, time::{OffsetDateTime, Duration}};
 use tokio_postgres::{types::ToSql, error::SqlState, Row};
 
 use crate::api::{error::AccountError, routes::user_routes};
@@ -33,18 +33,16 @@ impl UserPassword {
     }
 }
 
-pub struct User {
-    uid: String,
-    username: String,
-    password: UserPassword, 
-    email: String
-}
+pub struct User;
 
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "rocket::serde")]
 pub struct UserSession {
     sid: String,
     uid: String,
     username: String,
-    email: String
+    email: String,
+    expires_on: i64
 }
 
 impl ServiceInfo for User {
@@ -74,6 +72,9 @@ impl Service<User> {
 
     // The designated identifier for the PostgreSQL table where all user information is stored.
     const USER_TABLE: &str = "users";
+
+    // Session Duration
+    const SESSION_DURATION: usize = 604800000; // (7 Days)
 
     /// This function inserts a new user record directly into the PostgreSQL database.
     /// 
@@ -134,23 +135,63 @@ impl Service<User> {
         let method = Self::login_method(login);
         // Preparing query.
         let sql = format!("SELECT * from {} WHERE {} = $1", Self::USER_TABLE, method);
-        let statement = conn.prepare(&sql).await.unwrap();
         // Execute query.
-        match conn.query(&statement, &[&login]).await {
+        match self.short_query(&sql, &[&login]).await {
             Ok(v) => {
                 if v.len() == 0 { return Err(AccountError::LoginFailed); }
+                let uid: String = v[0].get(0);
+                let username: String = v[0].get(1);
+                let email: String = v[0].get(2);
                 let target: &str = v[0].get(3);
                 Self::password_verify(password, target).unwrap();
+                self.session_make(uid.as_str(), username.as_str(), email.as_str()).await.unwrap();
                 Ok(())
             },
             Err(_) => {
-                Err(AccountError::UnknownError)
+                return Err(AccountError::UnknownError)
             },
         }
     }
 
-    fn session_create(){}
-    fn session_revoke(){}
+    /// creates session id inside sessions table then creates a cookie...
+    async fn session_make(&mut self, uid: &str, username: &str, email: &str) -> Result<Cookie, AccountError> {
+        // Simple query insert if session does already 
+        // exist if it does update it.
+        let sql = "
+                INSERT INTO sessions (uid, sid, expires_on)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (uid) DO UPDATE SET
+                    sid = EXCLUDED.sid,
+                    expires_on = EXCLUDED.expires_on
+            ";
+        // Generate random session_id.
+        let sid = uuid::Uuid::new_v4().as_simple().to_string();
+        // Create the expiration.
+        let expires_on = SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as i64;
+        // The UserSession object.
+        let user_session = UserSession { 
+            sid: sid.to_string(),
+            uid: uid.to_string(), 
+            username: username.to_string(), 
+            email: email.to_string(),
+            expires_on,
+        };
+        // Execute query.
+        match self.short_query(sql, &[&uid, &sid, &expires_on]).await {
+            Ok(_) => {
+               let cookie = Cookie::build("sid", serde_json::to_string(&user_session)
+                    .unwrap())
+                    .expires(Expiration::DateTime(OffsetDateTime::now_utc().saturating_add(Duration::days(7))))
+                    .same_site(SameSite::None)
+                    .finish();
+               Ok(cookie)
+            },
+            Err(_) => Err(AccountError::UnknownError),
+        }
+    }
 
     /// The function "verify_password" performs a password 
     /// comparison operation to determine whether the provided 

@@ -59,7 +59,7 @@ async fn main() -> Result<(), rocket::Error>  {
     //user_service.lock().await.create("Hoar", "Hoar123", "hoar@gmail.com").await.unwrap();
     //user_service.lock().await.create("Doggy", "Doggy123!", "dog@gmail.com").await.unwrap();
     //user_service.lock().await.create("Doggy1", "Doggy123!1", "Doggy1@gmail.com").await.unwrap();
-    user_service.lock().await.login("Doggy1", "Doggy123!1").await.unwrap();
+    user_service.lock().await.login("Hoar", "Hoar123").await.unwrap();
     let user_routes = user_service.lock().await.routes().to_vec();
     
     rocket::build()
