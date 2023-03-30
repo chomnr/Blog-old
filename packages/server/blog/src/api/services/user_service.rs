@@ -92,9 +92,9 @@ impl Service<User> {
     /// ```
     pub async fn create(&mut self, username: &str, password: &str, email: &str) -> Result<(), AccountError> {
         // Calling the procedures and or constraints.
-        Self::username_proc(username).unwrap();
-        Self::password_proc(password).unwrap();
-        Self::email_proc(email).unwrap();
+        Self::username_proc(username)?;
+        Self::password_proc(password)?;
+        Self::email_proc(email)?;
         // Converting the given password string of type 
         // &str to an instance of UserPassword.
         let password = UserPassword::new(password);
@@ -134,8 +134,6 @@ impl Service<User> {
     /// user_service.login("JohnDoe", "DoeFarmer123");
     /// ```
     pub async fn login(&mut self, login: &str, password: &str) -> Result<UserSession, AccountError> {
-        // Getting Postgres object.
-        let conn = &self.pool.get().await.unwrap();
         // Deciding whether 'login' is a email or username.
         let method = Self::login_method(login);
         // Preparing query.
@@ -157,7 +155,10 @@ impl Service<User> {
         }
     }
 
-    /// creates session id inside sessions table then creates a cookie...
+    /// This function creates a unique session identifier 
+    /// within the sessions table and subsequently returns 
+    /// a SessionCookie object, representing the newly 
+    /// created session.
     async fn session_make(&mut self, uid: &str, username: &str, email: &str) -> Result<UserSession, AccountError> {
         // Simple query insert if session does already 
         // exist if it does update it.
