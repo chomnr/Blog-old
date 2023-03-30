@@ -1,7 +1,7 @@
 use std::any::{type_name, Any};
 
 use config::Config;
-use rocket::{Route, routes, post, State, futures::lock::Mutex, serde::{json::{Json, Value}, self}, response::Redirect, http::{Cookie, private::cookie::Expiration, SameSite, CookieJar}, time::{Duration, OffsetDateTime}};
+use rocket::{Route, routes, post, State, futures::lock::Mutex, serde::{json::{Json, Value}, self}, response::Redirect, http::{Cookie, private::cookie::Expiration, SameSite, CookieJar}, time::{Duration, OffsetDateTime}, get};
 use crate::api::{services::{User, Service}};
 use rocket::serde::json::json;
 
@@ -20,8 +20,6 @@ struct LoginUser {
     password: String,
 }
 
-// login method... with cookie...
-
 #[post("/create", format = "json", data = "<post_data>")]
 async fn create_account(post_data: Json<CreateUser>, user: &State<Mutex<Service<User>>>, settings: &State<Config>) -> Result<Redirect, Value> {
     let mut lock = user.lock().await;
@@ -31,7 +29,6 @@ async fn create_account(post_data: Json<CreateUser>, user: &State<Mutex<Service<
             Ok(Redirect::to(settings.get_string("frontend_url").unwrap()))
         },
         Err(err) => {
-            // Catch the error and return a custom JSON response
             Err(json!({
                 "message": err.to_string()
             }))
@@ -47,7 +44,7 @@ async fn login_account(jar: &CookieJar<'_>, post_data: Json<LoginUser>, user: &S
         Ok(res) => {
             let cookie = Cookie::build("sid", serde_json::to_string(&res)
                 .unwrap())
-                .expires(Expiration::DateTime(OffsetDateTime::now_utc().saturating_add(Duration::days(7)))) // fix duration make
+                .expires(Expiration::DateTime(OffsetDateTime::now_utc().saturating_add(Duration::days(7)))) // fix duration use global value todo()
                 .same_site(SameSite::None)
                 .finish();
             jar.add(cookie);
@@ -60,23 +57,13 @@ async fn login_account(jar: &CookieJar<'_>, post_data: Json<LoginUser>, user: &S
         }
     }
 }
-/*
-#[post("/login", format = "json", data = "<post_data>")]
-async fn login_account(cookies: &CookieJar<'_>, post_data: Json<LoginUser>, user: &State<Mutex<Service<User>>>) -> Option<String>  {
-    let login = post_data.0.login.as_str();
-    let password = post_data.0.password.as_str();
-    let login_meth = user.lock().await.login(login, password).await.unwrap();
-    let cookie = Cookie::build("sid", serde_json::to_string(&login_meth)
-                    .unwrap())
-                    .expires(Expiration::DateTime(OffsetDateTime::now_utc().saturating_add(Duration::days(7))))
-                    .same_site(SameSite::None)
-                    .finish();
-    cookies.add(cookie);
-    cookies.get("sid").map(|crumb| format!("Message: {}", crumb.value()))
-}
-*/
 
+#[get("/logout",)]
+async fn logout_account(jar: &CookieJar<'_>, settings: &State<Config>) -> Redirect {
+    jar.remove(Cookie::named("sid"));
+    Redirect::to(settings.get_string("frontend_url").unwrap())
+}
 
 pub fn routes() -> Vec<Route> {
-    routes![create_account, login_account]
+    routes![create_account, login_account, logout_account]
 }
