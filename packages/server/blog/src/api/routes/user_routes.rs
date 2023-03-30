@@ -1,6 +1,7 @@
 use std::any::{type_name, Any};
 
-use rocket::{Route, routes, post, State, futures::lock::Mutex, serde::{json::{Json, Value}, self}};
+use config::Config;
+use rocket::{Route, routes, post, State, futures::lock::Mutex, serde::{json::{Json, Value}, self}, response::Redirect, http::{Cookie, private::cookie::Expiration, SameSite, CookieJar}, time::{Duration, OffsetDateTime}};
 use crate::api::{services::{User, Service}};
 use rocket::serde::json::json;
 
@@ -22,20 +23,40 @@ struct LoginUser {
 // login method... with cookie...
 
 #[post("/create", format = "json", data = "<post_data>")]
-async fn create_account(post_data: Json<CreateUser>, user: &State<Mutex<Service<User>>>) -> Value {
+async fn create_account(post_data: Json<CreateUser>, user: &State<Mutex<Service<User>>>, settings: &State<Config>) -> Result<Redirect, Value> {
     let mut lock = user.lock().await;
-    let result = lock.create(&post_data.username, &post_data.password, &post_data.email).await;
-    match result {
+    let create = lock.create(&post_data.username, &post_data.password, &post_data.email).await;
+    match create {
         Ok(_) => {
-            json!({
-                "status": "SUCCESS",
-            })
+            Ok(Redirect::to(settings.get_string("frontend_url").unwrap()))
         },
         Err(err) => {
             // Catch the error and return a custom JSON response
-            json!({
+            Err(json!({
                 "message": err.to_string()
-            })
+            }))
+        }
+    }
+}
+
+#[post("/login", format = "json", data = "<post_data>")]
+async fn login_account(jar: &CookieJar<'_>, post_data: Json<LoginUser>, user: &State<Mutex<Service<User>>>, settings: &State<Config>) -> Result<Redirect, Value> {
+    let mut lock = user.lock().await;
+    let login = lock.login(&post_data.login, &post_data.password).await;
+    match login {
+        Ok(res) => {
+            let cookie = Cookie::build("sid", serde_json::to_string(&res)
+                .unwrap())
+                .expires(Expiration::DateTime(OffsetDateTime::now_utc().saturating_add(Duration::days(7)))) // fix duration make
+                .same_site(SameSite::None)
+                .finish();
+            jar.add(cookie);
+            Ok(Redirect::to(settings.get_string("frontend_url").unwrap()))
+        },
+        Err(err) => {
+            Err(json!({
+                "message": err.to_string()
+            }))
         }
     }
 }
@@ -57,5 +78,5 @@ async fn login_account(cookies: &CookieJar<'_>, post_data: Json<LoginUser>, user
 
 
 pub fn routes() -> Vec<Route> {
-    routes![create_account]
+    routes![create_account, login_account]
 }

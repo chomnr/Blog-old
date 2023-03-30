@@ -146,7 +146,7 @@ impl Service<User> {
                 let username: String = v[0].get(1);
                 let email: String = v[0].get(2);
                 let target: &str = v[0].get(3);
-                Self::password_verify(password, target).unwrap();
+                Self::password_verify(password, target)?;
                 Ok(self.session_make(uid.as_str(), username.as_str(), email.as_str()).await.unwrap())
             },
             Err(_) => {

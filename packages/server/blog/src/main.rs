@@ -63,7 +63,10 @@ async fn main() -> Result<(), rocket::Error>  {
     let user_routes = user_service.lock().await.routes().to_vec();
     
     rocket::build()
-    .mount("/api/user", user_routes).manage(user_service).attach(CORS).launch().await.unwrap();
+    .mount("/api/user", user_routes)
+    .manage(user_service)
+    .manage(settings)
+    .attach(CORS).launch().await.unwrap();
 
     Ok(())
 }
