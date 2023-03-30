@@ -1,5 +1,7 @@
-use rocket::{Route, routes, post, http::{Status, CookieJar, Cookie, private::cookie::Expiration, SameSite}, request::{FromRequest, Outcome}, State, futures::lock::Mutex, Response, response::{content, Redirect, status}, serde::{json::{Json, Value}, self}, time::{OffsetDateTime, Duration}};
-use crate::api::services::{User, Service};
+use std::any::{type_name, Any};
+
+use rocket::{Route, routes, post, State, futures::lock::Mutex, serde::{json::{Json, Value}, self}};
+use crate::api::{services::{User, Service}};
 use rocket::serde::json::json;
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -23,14 +25,16 @@ struct LoginUser {
 async fn create_account(post_data: Json<CreateUser>, user: &State<Mutex<Service<User>>>) -> Value {
     let mut lock = user.lock().await;
     let result = lock.create(&post_data.username, &post_data.password, &post_data.email).await;
-
     match result {
-        Ok(_) => json!({"status": "SUCCESS"}),
+        Ok(_) => {
+            json!({
+                "status": "SUCCESS",
+            })
+        },
         Err(err) => {
             // Catch the error and return a custom JSON response
             json!({
-                "status": "FAILED",
-                "reason": err.to_string()
+                "message": err.to_string()
             })
         }
     }
