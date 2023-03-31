@@ -27,6 +27,48 @@
     }
   </script>
 
+
+<div class="flex flex-col justify-center items-center bg-[#fff] h-screen">
+    <h3 class="text-center">LOGIN TO YOUR ACCOUNT</h3>
+    <form class="space-y-5 w-full max-w-md bg-white rounded px-8 pt-6 pb-8 mb-4 text-sm" on:submit={handleSubmit}>
+        <input bind:value={login} type="login" id="login" placeholder="Email Address or Username" class="border-[1px] border-gray-400 p-1 min-w-[400px]" />
+        <input bind:value={password} type="password" id="password" placeholder="Password" class="border-[1px] border-gray-400 p-1 min-w-[400px]" />
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit" >
+            Sign In
+        </button>
+    </form>
+</div>
+<!--
+<script>
+    let login = 'Hoar';
+    let password = 'Hoar123';
+  
+    /**
+     * @param {{ preventDefault: () => void; }} event
+     */
+    async function handleSubmit(event) {
+      event.preventDefault();
+  
+      const formData = {
+        login: login,
+        password: password,
+      };
+  
+      const response = await fetch('http://127.0.0.1:8000/api/user/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const data = await response.json();
+      console.log(data);
+    }
+  </script>
+-->
+
+<!--
 <div class="flex justify-center items-center h-screen">
     <form  class="w-full max-w-md bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4" on:submit={handleSubmit}>
         <h1 class="text-xl font-bold mb-6 text-center">Register Form</h1>
@@ -49,3 +91,4 @@
         </div>
     </form>
 </div>
+-->

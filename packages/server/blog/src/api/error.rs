@@ -2,7 +2,6 @@ use std::error::Error;
 use std::{fmt, cmp::min, any::Any};
 use std::any::type_name;
 
-use tokio_postgres::error::SqlState;
 
 #[derive(Debug)]
 pub enum AccountError {
@@ -31,6 +30,7 @@ impl fmt::Display for AccountError {
     }
 }
 
+/*
 impl AccountError {
     pub fn error_parse(er: tokio_postgres::Error) -> AccountError {
         let code = er.code().unwrap();
@@ -46,3 +46,4 @@ impl AccountError {
         return AccountError::UnknownError
     }
 }
+*/

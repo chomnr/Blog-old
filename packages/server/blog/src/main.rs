@@ -1,17 +1,28 @@
+#![feature(proc_macro_hygiene, decl_macro)]
+
+use api::services::{Config, User};
+use rocket_db_pools::{deadpool_postgres, Database};
+
 mod api;
 
-use std::sync::Arc;
+// Postgres Deadpool Pooling...
+#[derive(Database)]
+#[database("blog")]
+struct PostgresPool(deadpool_postgres::Pool);
 
-use api::{services::{Service, User, ServiceInfo}, routes::user_routes};
-use config::Config;
-use deadpool_postgres::{ManagerConfig, RecyclingMethod, Runtime};
-use rocket::{get, routes, Route, futures::lock::Mutex, fairing::{Fairing, Info, Kind}, Request, http::{Header, Method, Status}, Response};
-use tokio_postgres::NoTls;
+#[rocket::main]
+async fn main() -> Result<(), rocket::Error> {
+    let mut config_service = api::services::Service::<Config>::new();
+    let mut user_service = api::services::Service::<User>::new();
 
-pub const SETTING_FILE: &str = "Settings";
+    let rocket = rocket::build()
+        .attach(PostgresPool::init())
+        .ignite().await?
+        .launch().await?;
+    Ok(())
+}
 
-pub struct CORS;
-
+/* 
 #[rocket::async_trait]
 impl Fairing for CORS {
     fn info(&self) -> Info {
@@ -37,10 +48,13 @@ impl Fairing for CORS {
         response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
         response.set_header(Header::new("Vary", "Origin"));
     }
-}
+}*/
 
+
+/*
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error>  {
+
     let settings = Config::builder()
         .add_source(config::File::with_name(SETTING_FILE))
         .build()
@@ -53,20 +67,18 @@ async fn main() -> Result<(), rocket::Error>  {
     postgres_config.dbname = Some(settings.get("postgres_database").unwrap());
     postgres_config.manager = Some(ManagerConfig { recycling_method: RecyclingMethod::Fast });
     let pool = Arc::new(postgres_config.create_pool(Some(Runtime::Tokio1), NoTls).unwrap());
-    //let conn = postgres_pool.get().await.unwrap();
 
     let user_service = Mutex::new(User::register_service(pool.clone()));
-    //user_service.lock().await.create("Hoar", "Hoar123", "hoar@gmail.com").await.unwrap();
-    //user_service.lock().await.create("Doggy", "Doggy123!", "dog@gmail.com").await.unwrap();
-    //user_service.lock().await.create("Doggy1", "Doggy123!1", "Doggy1@gmail.com").await.unwrap();
-    //user_service.lock().await.login("Hoar", "Hoar123").await.unwrap();
     let user_routes = user_service.lock().await.routes().to_vec();
-    
+
     rocket::build()
     .mount("/api/user", user_routes)
+    .attach(CorsOptions::default().to_cors().unwrap())
     .manage(user_service)
     .manage(settings)
-    .attach(CORS).launch().await.unwrap();
+    .ignite().await.unwrap()
+    .launch().await.unwrap();
 
     Ok(())
 }
+*/

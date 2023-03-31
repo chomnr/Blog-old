@@ -1,6 +1,19 @@
 <script>
 	import { page } from '$app/stores';
 </script>
+
+<header class="flex flex-col items-center bg-[#001332] border-b-2 border-[#001B48] text-[#dde8f0] space-y-2 pt-2 pb-2">
+	<div class="text-3xl bg-[#1A325A] text-center rounded p-1">
+		<span class="text-[#97cbdc] font-[300] tracking-widest">BLOG</span>
+		<div class="float"></div>
+	</div>
+	<nav class="space-x-3 font-sans">
+		<a href="#" class="transition ease-in-out delay-100 hover:-translate-y-1 hover:scale-110 hover:text-[#808DA4] duration-300 ">Home</a>
+		<a href="#" class="transition ease-in-out delay-100 hover:-translate-y-1 hover:scale-110 hover:text-[#808DA4] duration-300 ">History</a>
+		<a href="#" class="transition ease-in-out delay-100 hover:-translate-y-1 hover:scale-110 hover:text-[#808DA4] duration-300 ">Placeholder</a>
+	</nav>
+</header>
+<!--
 <header class="flex flex-col justify-center bg-[#F5F5F5] border-b-2 border-[#E6E6E6]">
 	<nav class="flex justify-center space-x-1 p-1.5">
 		<ul class="flex flex-row space-x-1">
@@ -26,6 +39,7 @@
 		</ul>
 	</nav>
 </header>
+-->
 <!--
 <header>
 	<nav>

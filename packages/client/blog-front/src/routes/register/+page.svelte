@@ -1,6 +1,50 @@
 
 <script>
-    let username = 'doggy';
+  let username = 'Testy';
+  let email = 'Testy@gmail.com';
+  let password = 'Doggy123!';
+  let result = ''
+
+  /**
+   * @param {{ preventDefault: () => void; }} event
+   */
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    const formData = {
+      username: username,
+      email: email,
+      password: password,
+    };
+
+    const response = await fetch('http://127.0.0.1:8000/api/user/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
+
+   // const data = await response.json();
+   // console.log(data);
+  }
+</script>
+
+<div class="flex flex-col justify-center items-center bg-[#fff] h-screen">
+  <h3 class="text-center">LOGIN TO YOUR ACCOUNT</h3>
+  <form class="space-y-5 w-full max-w-md bg-white rounded px-8 pt-6 pb-8 mb-4 text-sm" on:submit={handleSubmit}>
+      <input bind:value={username} type="username" id="username" placeholder="Username" class="border-[1px] border-gray-400 p-1 min-w-[400px]" />
+      <input bind:value={email} type="email" id="email" placeholder="Email Address" class="border-[1px] border-gray-400 p-1 min-w-[400px]" />
+      <input bind:value={password} type="password" id="password" placeholder="Password" class="border-[1px] border-gray-400 p-1 min-w-[400px]" />
+      <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit" >
+          Register
+      </button>
+  </form>
+</div>
+
+<!--
+<script>
+    let username = 'doggy';c
     let email = 'hello@gmail.com';
     let password = 'Doggy123!das';
   
@@ -55,3 +99,4 @@
         </div>
     </form>
 </div>
+-->

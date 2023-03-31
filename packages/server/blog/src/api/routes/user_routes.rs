@@ -1,10 +1,7 @@
 use std::any::{type_name, Any};
 
-use config::Config;
-use rocket::{Route, routes, post, State, futures::lock::Mutex, serde::{json::{Json, Value}, self}, response::Redirect, http::{Cookie, private::cookie::Expiration, SameSite, CookieJar}, time::{Duration, OffsetDateTime}, get};
-use crate::api::{services::{User, Service}};
-use rocket::serde::json::json;
 
+/*
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(crate = "rocket::serde")]
 struct CreateUser {
@@ -20,13 +17,14 @@ struct LoginUser {
     password: String,
 }
 
-#[post("/create", format = "json", data = "<post_data>")]
+#[post("/create", format = "application/json", data = "<post_data>")]
 async fn create_account(post_data: Json<CreateUser>, user: &State<Mutex<Service<User>>>, settings: &State<Config>) -> Result<Redirect, Value> {
     let mut lock = user.lock().await;
     let create = lock.create(&post_data.username, &post_data.password, &post_data.email).await;
     match create {
         Ok(_) => {
-            Ok(Redirect::to(settings.get_string("frontend_url").unwrap()))
+           //return Ok(Redirect::to(uri!("http://127.0.0.1:5173/")))
+           return Ok(Redirect::temporary(uri!("http://127.0.0.1:5173/")))
         },
         Err(err) => {
             Err(json!({
@@ -36,7 +34,7 @@ async fn create_account(post_data: Json<CreateUser>, user: &State<Mutex<Service<
     }
 }
 
-#[post("/login", format = "json", data = "<post_data>")]
+#[post("/login", format = "application/json", data = "<post_data>")]
 async fn login_account(jar: &CookieJar<'_>, post_data: Json<LoginUser>, user: &State<Mutex<Service<User>>>, settings: &State<Config>) -> Result<Redirect, Value> {
     let mut lock = user.lock().await;
     let login = lock.login(&post_data.login, &post_data.password).await;
@@ -64,6 +62,8 @@ async fn logout_account(jar: &CookieJar<'_>, settings: &State<Config>) -> Redire
     Redirect::to(settings.get_string("frontend_url").unwrap())
 }
 
+
 pub fn routes() -> Vec<Route> {
     routes![create_account, login_account, logout_account]
 }
+*/
