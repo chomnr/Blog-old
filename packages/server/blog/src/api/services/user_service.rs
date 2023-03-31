@@ -1,6 +1,6 @@
 use std::{default, time::SystemTime};
 
-use argon2::{Argon2, PasswordVerifier, password_hash::{rand_core::OsRng, SaltString}, PasswordHasher};
+use argon2::{Argon2, PasswordVerifier, password_hash::{rand_core::OsRng, SaltString}, PasswordHasher, PasswordHash};
 use deadpool_postgres::Pool;
 use regex::Regex;
 use rocket::serde::{Deserialize, Serialize};
@@ -24,6 +24,13 @@ impl SecurePassword {
             hash: password_hash.hash.unwrap().to_string(), 
             salt: password_hash.salt.unwrap().to_string()
         }
+    }
+
+    pub fn to_phc_string(password: &str, salt: &str) -> String {
+        let argon2 = argon2::Argon2::default();
+        let params = argon2.params();
+        let phc_string = format!("$argon2id$v=19$m={},t={},p={}${}${}", params.m_cost(), params.t_cost(), params.p_cost(), salt, password);
+        phc_string
     }
 }
 
@@ -91,7 +98,7 @@ impl Service<User> {
     /// let mut user_service = User::register_service(None, conn);
     /// user_service.create("JohnDoe", "DoeFarmer123", "JohnDoe@gmail.com");
     /// ```
-    pub async fn create(&mut self, username: &str, password: &str, email: &str) -> Result<(), AccountError> {
+    pub async fn create(&self, username: &str, password: &str, email: &str) -> Result<(), AccountError> {
         // Calling the procedures and or constraints.
         Self::username_proc(username)?;
         Self::password_proc(password)?;
@@ -102,14 +109,15 @@ impl Service<User> {
         // Since a new account is being created, a unique identifier (UID) is required.
         let uid = uuid::Uuid::new_v4().as_simple().to_string();
         // Specifies the SQL statement that will be executed to perform the desired action.
-        let sql = format!("INSERT INTO {} (uid, username, email, password_hash, password_salt)  VALUES ($1, $2, $3, $4)", Self::USER_TABLE);
+        let sql = format!("INSERT INTO {} (uid, username, email, password_hash, password_salt)  VALUES ($1, $2, $3, $4, $5)", Self::USER_TABLE);
         // Executing the query.
         let short_query = self.short_query(sql.as_str(), 
             &[
                 &uid, 
                 &username, 
                 &email, 
-                &password.hash, 
+                &password.hash,
+                &password.salt
                 ]).await;
         if short_query.is_err() {
             return Err(
@@ -134,7 +142,7 @@ impl Service<User> {
     /// let mut user_service = User::register_service(None, conn);
     /// user_service.login("JohnDoe", "DoeFarmer123");
     /// ```
-    pub async fn login(&mut self, login: &str, password: &str) -> Result<UserSession, AccountError> {
+    pub async fn login(&self, login: &str, password: &str) -> Result<UserSession, AccountError> {
         // Deciding whether 'login' is a email or username.
         let method = Self::login_method(login);
         // Preparing query.
@@ -146,8 +154,9 @@ impl Service<User> {
                 let uid: String = v[0].get(0);
                 let username: String = v[0].get(1);
                 let email: String = v[0].get(2);
-                let target: &str = v[0].get(3);
-                Self::password_verify(password, target)?;
+                let target_hash: &str = v[0].get(3);
+                let target_salt: &str = v[0].get(4);
+                Self::password_verify(target_hash, target_salt, password)?;
                 Ok(self.session_make(uid.as_str(), username.as_str(), email.as_str()).await.unwrap())
             },
             Err(_) => {
@@ -160,7 +169,7 @@ impl Service<User> {
     /// within the sessions table and subsequently returns 
     /// a SessionCookie object, representing the newly 
     /// created session.
-    async fn session_make(&mut self, uid: &str, username: &str, email: &str) -> Result<UserSession, AccountError> {
+    async fn session_make(&self, uid: &str, username: &str, email: &str) -> Result<UserSession, AccountError> {
         // Simple query insert if session already 
         // exists update it, if not insert.
         let sql = "
@@ -202,13 +211,14 @@ impl Service<User> {
     /// fails, the function raises an AccountError with the 
     /// specific error LoginFailed, indicating that the 
     /// password verification process was unsuccessful.
-    fn password_verify(password: &str, target: &str) -> Result<bool, AccountError> {
+    fn password_verify(password: &str, salt: &str, input_pass: &str) -> Result<bool, AccountError> {
         // Default Argon2 configuration.
         let argon2 = Argon2::default();
         // PasswordHash of target password.
-        let target_hash = argon2::PasswordHash::new(target).unwrap();
+        let phc_string = SecurePassword::to_phc_string(&password, &salt);
+        let password_hash = PasswordHash::new(&phc_string).unwrap();
         // Checks if password == Target.
-        let check = argon2.verify_password(password.as_bytes(), &target_hash).is_ok();
+        let check = argon2.verify_password(input_pass.as_bytes(), &password_hash).is_ok();
         // If false return AccountError LoginFailed
         if !check {
             return Err(AccountError::LoginFailed);

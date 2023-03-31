@@ -6,12 +6,14 @@ mod config_service;
 mod user_service;
 mod database_service;
 pub use config_service::{Config};
-pub use user_service::{User};
+pub use user_service::{User, SecurePassword};
 pub use database_service::{Postgres};
 
 lazy_static::lazy_static! {
     pub static ref SERVICE_REGISTRY: RwLock<HashMap<String, Vec<ServiceStats>>> = RwLock::new(HashMap::new());
 }
+
+//todo implement service_registry for all classes to avoid using self mut on all my functions...
 
 pub struct Service<T> {
     name: String,
