@@ -4,8 +4,10 @@ use rocket::Route;
 
 mod config_service;
 mod user_service;
-pub use config_service::Config;
-pub use user_service::User;
+mod database_service;
+pub use config_service::{Config};
+pub use user_service::{User};
+pub use database_service::{Postgres};
 
 lazy_static::lazy_static! {
     pub static ref SERVICE_REGISTRY: RwLock<HashMap<String, Vec<ServiceStats>>> = RwLock::new(HashMap::new());
@@ -54,7 +56,7 @@ impl<T> Service<T> {
     pub fn statistics(&self) -> &Vec<ServiceStats> {
         &self.statistics
     }
-    
+    /*
     fn add_usage(&mut self, amount: u128) {
         let parent_func = std::any::type_name::<fn()>();
         if amount > 1 {
@@ -90,100 +92,5 @@ impl<T> Service<T> {
             self.statistics.push(new_stat);
         }
     }
+    */
 }
-/*
-impl<T> Service<T> {
-    pub fn new() -> Self {
-        let statistics: Vec<ServiceStats> = Vec::new();
-        Service {
-            name: file!().to_string()
-                .replace("_service", "to"),
-            category: file!().to_string(),
-            status: true,
-            service: todo!(),
-            statistics,
-        }
-    }
-}
-*/
-
-/* 
-lazy_static::lazy_static! {
-    pub static ref SERVICE_REGISTRY: RwLock<HashMap<String, Box<dyn ServiceInfo>>> = RwLock::new(HashMap::new());
-}
-
-
-#[derive(Clone)]
-pub struct Service<S: ServiceInfo> {
-    service: S,
-    stats: ServiceStats,
-    routes: Option<Vec<Route>>,
-}
-
-impl<T: ServiceInfo> Service<T> {
-    pub fn routes(&self) -> Vec<Route> {
-        self.routes.clone().unwrap_or_default()
-    }
-}
-
-pub trait ServiceInfo: Send + Sync {
-    fn register_service(self) -> Service<Self> where Self: Sized;
-}
-
-#[derive(Clone)]
-pub struct ServiceStats {
-    name: String,
-    usage: HashMap<String, u128>
-}
-
-impl Default for ServiceStats {
-    fn default() -> Self {
-        Self { 
-            name: file!().to_string(), 
-            usage: HashMap::default(), 
-        }
-    }
-}
-
-impl ServiceStats {
-    pub fn new(service_info: Box<dyn ServiceInfo>) -> ServiceStats {
-        let service_stats = ServiceStats::default();
-        let write = SERVICE_REGISTRY.write().unwrap();
-        write.insert(service_stats.name.clone(), service_info).unwrap();
-        service_stats
-    }
-
-    pub fn name(&self) -> &String {
-        &self.name
-    }
-
-    pub fn usage(&self) -> &String {
-        &self.name
-    }
-
-    pub fn add_usage(&mut self, amount: u128) {
-        if amount > 1 {
-            println!("You can only increment by 1.")
-        }
-        if amount < 1 {
-            println!("You cannot increment by a number that is less than 0.")
-        }
-        let parent_func = std::any::type_name::<fn()>();
-        if let Some(current_amount) = self.usage.get_mut(parent_func) {
-            *current_amount += amount
-        } else {
-            self.usage.insert(String::from(parent_func), 1);
-        }
-    }
-    
-    pub fn list_services() -> Vec<String> {
-        let read = SERVICE_REGISTRY.read().unwrap();
-        let mut list: Vec<String> = Vec::new();
-
-        for (k, v) in read.iter() {
-            list.push(k.to_string());
-        }
-        list
-    }
-}
-*/

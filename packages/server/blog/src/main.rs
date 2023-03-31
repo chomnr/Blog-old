@@ -1,26 +1,35 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
-use api::services::{Config, User};
-use rocket_db_pools::{deadpool_postgres, Database};
+use std::sync::Arc;
+
+use api::services::{Config, Postgres, Service, User};
+use dotenv::dotenv;
 
 mod api;
 
-// Postgres Deadpool Pooling...
-#[derive(Database)]
-#[database("blog")]
-struct PostgresPool(deadpool_postgres::Pool);
-
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
-    let mut config_service = api::services::Service::<Config>::new();
-    let mut user_service = api::services::Service::<User>::new();
-
+    dotenv().ok();
+    // Services
+    let config_service = Service::<Config>::new();
+    let postgres_service = Service::<Postgres>::new(config_service.postgres());
+    let user_service = Service::<User>::new(postgres_service.new_pool());
+    // Rocket
     let rocket = rocket::build()
-        .attach(PostgresPool::init())
+        .manage(user_service)
         .ignite().await?
         .launch().await?;
     Ok(())
 }
+
+
+/*
+// Postgres Deadpool Pooling...
+#[derive(Database)]
+#[database("blog")]
+struct PostgresPool(deadpool_postgres::Pool);
+*/
+
 
 /* 
 #[rocket::async_trait]

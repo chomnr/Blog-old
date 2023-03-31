@@ -7,8 +7,12 @@ edition = "2021"
 
 [dependencies]
 rocket = { version = "0.5.0-rc.1"}
-rocket_db_pools = { version = "0.1.0-rc.3", features = ["deadpool_postgres"]}
+deadpool-postgres = { version = "0.10.5" }
+#rocket_db_pools = { version = "0.1.0-rc.3", features = ["deadpool_postgres"]}
 tokio-postgres = "0.7.8"
-config = "0.13.3"
+argon2 = "0.5.0"
+uuid = { version = "1.3.0", features = ["v4"]}
+dotenv = "0.15.0"
 lazy_static = "1.4.0"
+regex = "1.7.3"
 
