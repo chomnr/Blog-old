@@ -19,6 +19,14 @@ async fn api_index() -> Value {
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
+    // Tracey Profiler
+    // You can remove this if you dont want to profile
+    // the code. If you do remove it make sure you
+    // get rid of the tracing dependencies.
+    tracing::subscriber::set_global_default(
+        tracing_subscriber::registry()
+            .with(tracing_tracy::TracyLayer::new()),
+    ).unwrap();
     //dotenv
     dotenv().ok();
     // your frontend url...
