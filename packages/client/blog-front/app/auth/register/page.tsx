@@ -12,8 +12,8 @@ export default function Page() {
     email: '',
     password: ''
   })
-  
-  const [error, setError] = useState({
+
+  const [error, setErrorMessage] = useState({
     message: ''
   })
 
@@ -31,8 +31,8 @@ export default function Page() {
       console.log("Success: " + data["message"])
       window.location.href = "/auth/login";
     } else {
-      console.log("Failed: " + data["message"])
-      error.message = data["message"]
+      console.log("Error: " + data["message"])
+      setErrorMessage({ message: data["message"] });
     }
   };
 
@@ -63,11 +63,9 @@ export default function Page() {
               </div>
               <div className='flex flex-col space-y-2'>
                   <button className='bg-[#4E192B] rounded text-white p-2 hover:bg-[#603040]' placeholder='Password'>Register</button>
-                  {error && (
                     <div className="text-red-500 mt-2 text-sm">
                         {error.message}
                     </div>
-                  )}
                   <span className='text-sm'>Have an account already?<a href="/auth/login" className='text-[#234E52] hover:text-[#A29E9D]'> Login</a></span>
               </div>
             </form>

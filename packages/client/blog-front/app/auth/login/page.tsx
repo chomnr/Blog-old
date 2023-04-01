@@ -12,6 +12,10 @@ export default function Page() {
     password: '',
   })
 
+  const [error, setErrorMessage] = useState({
+    message: ''
+  })
+
   const handleSubmit = async (event: any) => {
     event.preventDefault();
     let res = await fetch(url, {
@@ -28,6 +32,7 @@ export default function Page() {
       window.location.href = "/";
     } else {
       console.log("Failed: " + data["message"])
+      setErrorMessage({ message: data["message"] });
     }
   };
 
@@ -54,6 +59,9 @@ export default function Page() {
               </div>
               <div className='flex flex-col space-y-2'>
                   <button className='bg-[#4E192B] rounded text-white p-2 hover:bg-[#603040]' placeholder='Password'>Login</button>
+                  <div className="text-red-500 mt-2 text-sm">
+                        {error.message}
+                  </div>
                   <span className='text-sm'>Don't have an account? <a href="/auth/register" className='text-[#234E52] hover:text-[#A29E9D]'>Register</a></span>
               </div>
             </form>
