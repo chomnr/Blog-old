@@ -1,5 +1,4 @@
 import './globals.css'
-import Navbar from './components/navbar'
 
 export const metadata = {
   title: 'Home',
@@ -14,10 +13,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className=''>
-        <Navbar/>
-        <div className="flex flex-col justify-center items-center space-y-3">
           {children}
-        </div>
       </body>
     </html>
   )

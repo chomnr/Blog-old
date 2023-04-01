@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image'
 import { Metadata } from 'next'
 
@@ -7,13 +9,12 @@ export const metadata: Metadata = {
   }
   
 export default function Page() {
-  let username = ""
-  let email = ""
-  let password = ""
+  let login = "Doggy"
+  let password = "Doggy123!"
     let handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     try {
-      let res = await fetch("https://httpbin.org/post", {
+      let res = await fetch("http://localhost:8000/api/user/login", {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
@@ -22,8 +23,7 @@ export default function Page() {
           'Origin': 'http://localhost:3000/',
         },
         body: JSON.stringify({
-          username: name,
-          email: email,
+          login: login,
           password: password
         }),
       });
