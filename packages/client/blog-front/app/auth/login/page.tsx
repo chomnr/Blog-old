@@ -59,7 +59,7 @@ export default function Page() {
                   <input className='border-2 p-1.5 text-sm' type='password' placeholder='Password' value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} required></input>
               </div>
               <div className='flex flex-col space-y-2'>
-                  <button className='bg-[#4E192B] rounded text-white p-2 hover:bg-[#603040]' placeholder='Password'>Login</button>
+                  <button className='bg-[#4E192B] rounded text-white p-2 hover:bg-[#603040]'>Login</button>
                   <div className="text-red-500 mt-2 text-sm">
                         {error.message}
                   </div>
