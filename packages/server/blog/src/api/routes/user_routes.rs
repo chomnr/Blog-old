@@ -1,6 +1,7 @@
+#![feature(type_ascription)]
 use std::{any::{type_name, Any}, sync::Mutex};
 
-use rocket::{serde::{Serialize, Deserialize, json::{Json, Value, serde_json::{json, self}}, self}, State, response::Redirect, post, uri, Route, http::{private::cookie::Expiration, Cookie, CookieJar, SameSite}, time::{OffsetDateTime, Duration}};
+use rocket::{serde::{Serialize, Deserialize, json::{Json, Value, serde_json::{json, self}, self}, self}, State, response::Redirect, post, uri, Route, http::{private::cookie::Expiration, Cookie, CookieJar, SameSite, Status}, time::{OffsetDateTime, Duration}};
 
 use crate::api::services::Service;
 use crate::User;
@@ -94,18 +95,11 @@ struct LoginUser {
 
 
 #[post("/create", format = "application/json", data = "<post_data>")]
-async fn create_account(post_data: Json<CreateUser>, user: &State<Service<User>>) -> Result<Redirect, Value> {
+async fn create_account(post_data: Json<CreateUser>, user: &State<Service<User>>) -> (Status, Value) {
     let create = user.create(&post_data.username, &post_data.password, &post_data.email).await;
     match create {
-        Ok(_) => {
-           //return Ok(Redirect::to(uri!("http://127.0.0.1:5173/")))
-           return Ok(Redirect::temporary(uri!("http://127.0.0.1:5173/")))
-        },
-        Err(err) => {
-            Err(json!({
-                "message": err.to_string()
-            }))
-        }
+        Ok(_) => (Status::Ok, json!({"message": "Success"})),
+        Err(err) => (Status::Conflict, json!({"message": err.to_string()}))
     }
 }
 
