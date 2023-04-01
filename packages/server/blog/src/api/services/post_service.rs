@@ -1,5 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use rocket::serde::{self, Deserialize, Serialize, json::Value};
 use tokio_postgres::{types::ToSql, Row};
 
 use crate::api::error::PostError;
@@ -8,6 +9,15 @@ use super::{Service, ServiceStats};
 
 pub struct Post {
     pool: deadpool_postgres::Pool
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "rocket::serde")]
+pub struct PostEntry {
+    blog_id: i32,
+    uid: String,
+    author: String,
+    title: String,
 }
 
 
@@ -51,6 +61,28 @@ impl Service<Post> {
                 &current_time
                 ]).await.unwrap();
         Ok(())
+    }
+
+    pub async fn entries(&self) -> String {
+        //let mut post_entries: PostInfo = vec![];
+        //let sql = "SELECT posts.id, posts.uid, posts.title, posts.content, users.username FROM posts JOIN users ON posts.uid = users.uid";
+        let sql = "SELECT posts.id, posts.uid, posts.title, users.username FROM posts JOIN users ON posts.uid = users.uid";
+        let rows = self.short_query(sql, &[]).await.unwrap();
+        let mut posts: Vec<PostEntry> = Vec::new();
+        for row in rows {
+            let blog_id: i32 = row.get(0);
+            let uid: String = row.get(1);
+            let title: String = row.get(2);
+            let author: String = row.get(3);
+            let post_info = PostEntry {
+                blog_id,
+                uid, 
+                title,
+                author
+            };
+            posts.push(post_info);
+        }
+        serde::json::to_string(&posts).unwrap()
     }
 
     pub fn title_proc(title: &str) -> Result<(), PostError> {
