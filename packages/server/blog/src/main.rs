@@ -31,7 +31,7 @@ async fn main() -> Result<(), rocket::Error> {
     dotenv().ok();
     // your frontend url...
     let allowed_origins = AllowedOrigins::some_exact(&["http://localhost:3000/"]);
-    // You can also deserialize this
+    // Standard cors setup...
     let cors = rocket_cors::CorsOptions {
         allowed_origins: allowed_origins,
         allowed_methods: vec![Method::Get, Method::Post, Method::Options].into_iter().map(From::from).collect(),
