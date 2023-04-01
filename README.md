@@ -6,6 +6,6 @@ Simple but scalable blog system written in Rust & React
 /api/user/login <- Login to an account<br>
 /api/post/create <- Create a post<br>
 /api/post/entries <- List all posts<br>
-/api/post/entries/<id> <- Retrieve a specific post<br>
+/api/post/entries/{id} <- Retrieve a specific post<br>
 
 
