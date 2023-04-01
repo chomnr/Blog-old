@@ -1,7 +1,7 @@
 # BLOG <br>
 Simple but scalable blog system written in Rust & React
 
-## Endpoint
+## ENDPOINTS
 /api/user/create <- Create an account<br>
 /api/user/login <- Login to an account<br>
 /api/post/create <- Create a post<br>
