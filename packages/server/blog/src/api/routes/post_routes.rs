@@ -51,14 +51,18 @@ async fn create_post(jar: &CookieJar<'_>, post_data: Json<CreatePost>, user: &St
 
 #[get("/entries")]
 async fn get_entries(post: &State<Service<Post>>) -> Value {
-    rocket::serde::json::Value::String(post.entries().await)
+    post.entries().await
 }
 
-#[get("/entry/{id}")]
-async fn get_entry(post: &State<Service<Post>>) -> Value {
-    rocket::serde::json::Value::String(post.entries().await)
+#[get("/entries/<id>")]
+async fn get_entry(id: i32, post: &State<Service<Post>>) -> Result<Value, (Status, Value)> {
+    match post.entry(id).await {
+        Ok(v) => Ok(v),
+        Err(er) => Err((Status::Unauthorized, json!({"message": er.to_string()}))),
+    }
 }
+
 
 pub fn routes() -> Vec<Route> {
-    routes![create_post, get_entries]
+    routes![create_post, get_entries, get_entry]
 }

@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use rocket::serde::{self, Deserialize, Serialize, json::Value};
+use rocket::serde::{self, Deserialize, Serialize, json::{Value, self}};
 use tokio_postgres::{types::ToSql, Row};
 
 use crate::api::error::PostError;
@@ -18,6 +18,17 @@ pub struct PostEntry {
     uid: String,
     author: String,
     title: String,
+    created_on: i64
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "rocket::serde")]
+pub struct PostSingleEntry {
+    uid: String,
+    title: String,
+    content: String,
+    created_on: i64,
+    author: String
 }
 
 
@@ -63,10 +74,10 @@ impl Service<Post> {
         Ok(())
     }
 
-    pub async fn entries(&self) -> String {
+    pub async fn entries(&self) -> Value {
         //let mut post_entries: PostInfo = vec![];
         //let sql = "SELECT posts.id, posts.uid, posts.title, posts.content, users.username FROM posts JOIN users ON posts.uid = users.uid";
-        let sql = "SELECT posts.id, posts.uid, posts.title, users.username FROM posts JOIN users ON posts.uid = users.uid";
+        let sql = "SELECT posts.id, posts.uid, posts.title, users.username, posts.created_on FROM posts JOIN users ON posts.uid = users.uid";
         let rows = self.short_query(sql, &[]).await.unwrap();
         let mut posts: Vec<PostEntry> = Vec::new();
         for row in rows {
@@ -74,15 +85,60 @@ impl Service<Post> {
             let uid: String = row.get(1);
             let title: String = row.get(2);
             let author: String = row.get(3);
+            let created_on: i64 = row.get(4);
             let post_info = PostEntry {
                 blog_id,
                 uid, 
                 title,
-                author
+                author,
+                created_on
             };
             posts.push(post_info);
         }
-        serde::json::to_string(&posts).unwrap()
+        serde::json::to_value(&posts).unwrap()
+    }
+
+    pub async fn entry(&self, id: i32) -> Result<Value, PostError> {
+        let sql = "SELECT posts.uid, posts.title, posts.content, posts.created_on, users.username FROM posts JOIN users on posts.uid = users.uid WHERE id = $1";
+        
+        let row = self.short_query(sql, &[&id]).await.unwrap();
+        if row.len() < 1 {
+            return Err(PostError::InvalidPostId);
+        }
+        let row = self.short_query(sql, &[&id]).await.unwrap();
+        let uid: String = row[0].get(0);
+        let title: String = row[0].get(1);
+        let content: String = row[0].get(2);
+        let created_on: i64 = row[0].get(3);
+        let author: String = row[0].get(4);
+        let post = PostSingleEntry {
+            uid,
+            title,
+            content,
+            created_on,
+            author
+        };
+
+        Ok(json::to_value(&post).unwrap())
+        /* 
+        let row = self.short_query(sql, &[&id]).await.unwrap();
+        
+        let uid: String = row[0].get(0);
+        let title: String = row[0].get(1);
+        let content: String = row[0].get(2);
+        let created_on: i64 = row[0].get(3);
+        let author: String = row[0].get(4);
+
+        let post = PostSingleEntry {
+            uid,
+            title,
+            content,
+            created_on,
+            author
+        };
+
+        json::to_string(&post).unwrap()
+        */
     }
 
     pub fn title_proc(title: &str) -> Result<(), PostError> {

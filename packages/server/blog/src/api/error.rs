@@ -54,12 +54,14 @@ impl AccountError {
 #[derive(Debug)]
 pub enum PostError {
     PostViolation,
+    InvalidPostId
 }
 
 impl fmt::Display for PostError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             PostError::PostViolation => write!(f, "The specified post violates the format requirements."),
+            PostError::InvalidPostId => write!(f, "The specified post id is invalid."),
         }
     }
 }
