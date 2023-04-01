@@ -30,6 +30,7 @@ export default function Page() {
     if (res.status === 200) {
       console.log("Success: " + data["message"])
       window.location.href = "/";
+      setErrorMessage({ message: data["message"] });
     } else {
       console.log("Failed: " + data["message"])
       setErrorMessage({ message: data["message"] });
@@ -51,11 +52,11 @@ export default function Page() {
             <form className="flex flex-col space-y-5 rounded w-[300px]" onSubmit={handleSubmit}>
               <div className='flex flex-col space-y-2'>
                   <label className='font-bold text-sm'>Username or Email</label>
-                  <input className='border-2 p-1.5 text-sm' placeholder='Username or Email' value={formData.login} onChange={(e) => setFormData({ ...formData, login: e.target.value })}></input>
+                  <input className='border-2 p-1.5 text-sm' placeholder='Username or Email' value={formData.login} onChange={(e) => setFormData({ ...formData, login: e.target.value })} required></input>
               </div>
               <div className='flex flex-col space-y-2'>
                   <label className='font-bold text-sm'>Password</label>
-                  <input className='border-2 p-1.5 text-sm' type='password' placeholder='Password' value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}></input>
+                  <input className='border-2 p-1.5 text-sm' type='password' placeholder='Password' value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} required></input>
               </div>
               <div className='flex flex-col space-y-2'>
                   <button className='bg-[#4E192B] rounded text-white p-2 hover:bg-[#603040]' placeholder='Password'>Login</button>

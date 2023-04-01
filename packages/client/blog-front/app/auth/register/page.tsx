@@ -51,15 +51,15 @@ export default function Page() {
             <form className="flex flex-col space-y-5 rounded w-[300px]" onSubmit={handleSubmit}>
               <div className='flex flex-col space-y-2'>
                   <label className='font-bold text-sm'>Username</label>
-                  <input className='border-2 p-1.5 text-sm' type='username' placeholder='Username' value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })}></input>
+                  <input className='border-2 p-1.5 text-sm' type='username' placeholder='Username' value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} required></input>
               </div>
               <div className='flex flex-col space-y-2'>
                   <label className='font-bold text-sm'>Email</label>
-                  <input className='border-2 p-1.5 text-sm' type='email' placeholder='Email' value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}></input>
+                  <input className='border-2 p-1.5 text-sm' type='email' placeholder='Email' value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required></input>
               </div>
               <div className='flex flex-col space-y-2'>
                   <label className='font-bold text-sm'>Password</label>
-                  <input className='border-2 p-1.5 text-sm' type='password' placeholder='Password' value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}></input>
+                  <input className='border-2 p-1.5 text-sm' type='password' placeholder='Password' value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} required></input>
               </div>
               <div className='flex flex-col space-y-2'>
                   <button className='bg-[#4E192B] rounded text-white p-2 hover:bg-[#603040]' placeholder='Password'>Register</button>
