@@ -44,7 +44,6 @@ async fn login_account(jar: &CookieJar<'_>, post_data: Json<LoginUser>, user: &S
                 .expires(Expiration::DateTime(OffsetDateTime::now_utc().saturating_add(Duration::days(7))))
                 .secure(false) // enable secure if you're using https...
                 .finish();
-
             jar.add(cookie);
             Ok((Status::Ok, json!({"message": "Success"})))
         },
