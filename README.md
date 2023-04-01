@@ -1,7 +1,4 @@
-# blog
 
-
-## ENDPOINTS
 /api/user/create <- Create an account
 --
 /api/user/login <- Login to an account
