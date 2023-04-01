@@ -24,8 +24,6 @@ struct LoginUser {
     password: String,
 }
 
-
-
 #[post("/create", format = "application/json", data = "<post_data>")]
 async fn create_account(post_data: Json<CreateUser>, user: &State<Service<User>>) -> (Status, Value) {
     let create = user.create(&post_data.username, &post_data.password, &post_data.email).await;
@@ -43,9 +41,9 @@ async fn login_account(jar: &CookieJar<'_>, post_data: Json<LoginUser>, user: &S
             let cookie = Cookie::build("sid", serde_json::to_string(&res)
                 .unwrap())
                 .same_site(SameSite::None)
-                .secure(false)
+                .expires(Expiration::DateTime(OffsetDateTime::now_utc().saturating_add(Duration::days(7))))
+                .secure(false) // enable secure if you're using https...
                 .finish();
-            //                .expires(Expiration::DateTime(OffsetDateTime::now_utc().saturating_add(Duration::days(7)))) // fix duration use global value todo()
 
             jar.add(cookie);
             Ok((Status::Ok, json!({"message": "Success"})))

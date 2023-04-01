@@ -19,11 +19,10 @@ async fn api_index() -> Value {
 
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
+    //dotenv
     dotenv().ok();
-
     // your frontend url...
     let allowed_origins = AllowedOrigins::some_exact(&["http://localhost:3000/"]);
-
     // You can also deserialize this
     let cors = rocket_cors::CorsOptions {
         allowed_origins: allowed_origins,
@@ -33,12 +32,11 @@ async fn main() -> Result<(), rocket::Error> {
         ..Default::default()
     }
     .to_cors().unwrap();
-
     // Services
     let config_service = Service::<Config>::new();
     let postgres_service = Service::<Postgres>::new(config_service.postgres());
     let user_service = Service::<User>::new(postgres_service.new_pool());
-    /// Routes
+    // Routes
     let user_routes = api::routes::user_routes::routes();
     // Rocket
     let rocket = rocket::build()
