@@ -16,6 +16,8 @@ export default function Page() {
     event.preventDefault();
     let res = await fetch(url, {
       method: "POST",
+      credentials: 'include',
+      redirect: 'follow',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -24,7 +26,7 @@ export default function Page() {
     let data = await res.json();
     if (res.status === 200) {
       console.log("Success: " + data["message"])
-      window.location.href = "/";
+      //window.location.href = "/";
     } else {
       console.log("Failed: " + data["message"])
     }

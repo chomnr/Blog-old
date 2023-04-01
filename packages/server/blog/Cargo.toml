@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rocket = { version = "0.5.0-rc.1", features=["json"]}
-rocket_cors = "0.6.0-alpha1"
+rocket = { version = "0.5.0-rc.2", features=["json"]}
+rocket_cors = { git = "https://github.com/lawliet89/rocket_cors", branch = "master" }
 deadpool-postgres = { version = "0.10.5" }
 #rocket_db_pools = { version = "0.1.0-rc.3", features = ["deadpool_postgres"]}
 tokio-postgres = "0.7.8"

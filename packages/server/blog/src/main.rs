@@ -1,8 +1,8 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
 use std::sync::Arc;
-use rocket::{serde::json::{serde_json::json, Value}, get, routes};
-use rocket_cors::{AllowedHeaders, AllowedOrigins};
+use rocket::{serde::json::{serde_json::json, Value}, get, routes, http::Method};
+use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 use tracing_subscriber::layer::SubscriberExt;
 
 use api::{services::{Config, Postgres, Service, User, SecurePassword}, routes::{user_routes, self}};
@@ -20,7 +20,20 @@ async fn api_index() -> Value {
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
     dotenv().ok();
-    // Cors
+
+    // your frontend url...
+    let allowed_origins = AllowedOrigins::some_exact(&["http://localhost:3000/"]);
+
+    // You can also deserialize this
+    let cors = rocket_cors::CorsOptions {
+        allowed_origins: allowed_origins,
+        allowed_methods: vec![Method::Get, Method::Post, Method::Options].into_iter().map(From::from).collect(),
+        allowed_headers: AllowedHeaders::some(&["Authorization", "Accept", "Content-Type"]),
+        allow_credentials: true,
+        ..Default::default()
+    }
+    .to_cors().unwrap();
+
     // Services
     let config_service = Service::<Config>::new();
     let postgres_service = Service::<Postgres>::new(config_service.postgres());
@@ -29,12 +42,10 @@ async fn main() -> Result<(), rocket::Error> {
     let user_routes = api::routes::user_routes::routes();
     // Rocket
     let rocket = rocket::build()
-        .attach(rocket_cors::CorsOptions::default().to_cors().unwrap())
-        .mount("/", rocket_cors::catch_all_options_routes())
         .mount("/", routes![api_index])
         .mount("/api/user", user_routes)
+        .attach(cors)
         .manage(user_service)
-        .manage(rocket_cors::CorsOptions::default().to_cors().unwrap())
         .ignite().await?
         .launch().await?;
     Ok(())
