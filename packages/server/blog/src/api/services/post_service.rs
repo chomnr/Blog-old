@@ -13,8 +13,10 @@ pub struct Post {
 
 impl Service<Post> {
     // Post Constraints
-    const POST_TITLE_MAX: usize = 70;
     const POST_TITLE_MIN: usize = 20;
+    const POST_TITLE_MAX: usize = 70;
+    const POST_CONTENT_MIN: usize = 20;
+    const POST_CONTENT_MAX: usize = 100000; // 100k character limit..
 
     pub fn new(pool: deadpool_postgres::Pool) -> Self {
         let statistics: Vec<ServiceStats> = Vec::new();
@@ -32,6 +34,7 @@ impl Service<Post> {
     pub async fn create(&self, author_uid: &str, title: &str, content: &str) -> Result<(), PostError> {
         // Calling the procedures and or constraints.
         Self::title_proc(title)?;
+        Self::content_proc(content)?;
         // Specifies the SQL statement that will be executed to perform the desired action.
         let sql = format!("INSERT INTO posts (uid, title, content, created_on)  VALUES ($1, $2, $3, $4)");
         // Current time
@@ -59,6 +62,20 @@ impl Service<Post> {
         // Verifies whether the length of the username exceeds 
         // the permissible maximum value.
         if title.len() > Self::POST_TITLE_MAX {
+            return Err(PostError::PostViolation)
+        }
+        Ok(())
+    }
+
+    pub fn content_proc(title: &str) -> Result<(), PostError> {
+        // Verifies whether the length of the password is 
+        // below the prescribed minimum.
+        if title.len() < Self::POST_CONTENT_MIN {
+            return Err(PostError::PostViolation)
+        }
+        // Verifies whether the length of the username exceeds 
+        // the permissible maximum value.
+        if title.len() > Self::POST_CONTENT_MAX {
             return Err(PostError::PostViolation)
         }
         Ok(())

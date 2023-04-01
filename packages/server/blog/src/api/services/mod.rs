@@ -7,7 +7,7 @@ mod user_service;
 mod database_service;
 mod post_service;
 pub use config_service::{Config};
-pub use user_service::{User, SecurePassword};
+pub use user_service::{User, UserSession, SecurePassword};
 pub use database_service::{Postgres};
 pub use post_service::{Post};
 

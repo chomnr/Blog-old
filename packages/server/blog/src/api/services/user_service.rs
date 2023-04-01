@@ -41,10 +41,10 @@ pub struct User {
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct UserSession {
-    sid: String,
-    uid: String,
-    username: String,
-    email: String,
+    pub sid: String,
+    pub uid: String,
+    pub username: String,
+    pub email: String,
     expires_on: i64
 }
 
@@ -163,6 +163,19 @@ impl Service<User> {
                 return Err(AccountError::UnknownError)
             },
         }
+    }
+
+    /// Validates a pre-existing session.
+    pub async fn session_validate(&self, session_id: &str) -> Result<(), AccountError>{
+        let sql = "SELECT * FROM sessions WHERE sid = $1";
+        let short_query = self.short_query(sql, 
+            &[
+                &session_id,
+                ]).await.unwrap();
+        if short_query.len() < 1 {
+            return Err(AccountError::InvalidSession)
+        }
+        Ok(())
     }
 
     /// This function creates a unique session identifier 

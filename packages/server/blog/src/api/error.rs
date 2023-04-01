@@ -14,7 +14,8 @@ pub enum AccountError {
     EmailTaken,
     RegistrationFailed, //hmm
     LoginFailed,
-    UnknownError
+    UnknownError,
+    InvalidSession
 }
 
 impl fmt::Display for AccountError {
@@ -28,6 +29,7 @@ impl fmt::Display for AccountError {
             AccountError::RegistrationFailed => write!(f, "Account registration failed due to an unknown error. Please try again later."),
             AccountError::LoginFailed => write!(f, "Login failed due to an unknown error. Please try again later."),
             AccountError::UnknownError => write!(f, "This error is unknown to the world."),
+            AccountError::InvalidSession => write!(f, "The specified session is invalid."),
         }
     }
 }
