@@ -60,41 +60,4 @@ impl<T> Service<T> {
     pub fn statistics(&self) -> &Vec<ServiceStats> {
         &self.statistics
     }
-    /*
-    fn add_usage(&mut self, amount: u128) {
-        let parent_func = std::any::type_name::<fn()>();
-        if amount > 1 {
-            println!("You can only increment by 1.")
-        }
-        if amount < 1 {
-            println!("You cannot increment by a number that is less than 0.")
-        }
-        let size = self.statistics.len();
-        let mut counter = 0;
-        let time = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_millis();
-        let mut found_stat = false;
-        for stat in &mut self.statistics {
-            if stat.name == parent_func {
-                stat.usage += amount;
-                stat.last_usage = time;
-                found_stat = true;
-                break;
-            }
-            counter +=1;
-        }
-        if !found_stat && counter == size {
-            let new_stat = ServiceStats { 
-                name: parent_func.to_owned(), 
-                function: parent_func.to_owned(), 
-                category: file!().to_string(), 
-                usage: 1, 
-                last_usage: time,
-            };
-            self.statistics.push(new_stat);
-        }
-    }
-    */
 }

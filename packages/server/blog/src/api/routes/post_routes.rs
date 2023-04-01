@@ -58,7 +58,7 @@ async fn get_entries(post: &State<Service<Post>>) -> Value {
 async fn get_entry(id: i32, post: &State<Service<Post>>) -> Result<Value, (Status, Value)> {
     match post.entry(id).await {
         Ok(v) => Ok(v),
-        Err(er) => Err((Status::Unauthorized, json!({"message": er.to_string()}))),
+        Err(er) => Err((Status::NotFound, json!({"message": er.to_string()}))),
     }
 }
 

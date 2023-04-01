@@ -61,16 +61,3 @@ async fn main() -> Result<(), rocket::Error> {
         .launch().await?;
     Ok(())
 }
-
-
-/*
-    tracing::subscriber::set_global_default(
-        tracing_subscriber::registry()
-            .with(tracing_tracy::TracyLayer::new()),
-    ).expect("set up the subscriber");
-
-// Postgres Deadpool Pooling...
-#[derive(Database)]
-#[database("blog")]
-struct PostgresPool(deadpool_postgres::Pool);
-*/
