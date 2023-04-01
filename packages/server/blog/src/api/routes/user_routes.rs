@@ -1,7 +1,7 @@
 #![feature(type_ascription)]
 use std::{any::{type_name, Any}, sync::Mutex};
 
-use rocket::{serde::{Serialize, Deserialize, json::{Json, Value, serde_json::{json, self}, self}, self}, State, response::Redirect, post, uri, Route, http::{private::cookie::Expiration, Cookie, CookieJar, SameSite, Status}, time::{OffsetDateTime, Duration}};
+use rocket::{serde::{Serialize, Deserialize, json::{Json, Value, serde_json::{json, self}}, self}, State, post, Route, http::{private::cookie::Expiration, Cookie, CookieJar, SameSite, Status}, time::{OffsetDateTime, Duration}};
 
 use crate::api::services::Service;
 use crate::User;

@@ -5,9 +5,11 @@ use rocket::Route;
 mod config_service;
 mod user_service;
 mod database_service;
+mod post_service;
 pub use config_service::{Config};
 pub use user_service::{User, SecurePassword};
 pub use database_service::{Postgres};
+pub use post_service::{Post};
 
 lazy_static::lazy_static! {
     pub static ref SERVICE_REGISTRY: RwLock<HashMap<String, Vec<ServiceStats>>> = RwLock::new(HashMap::new());

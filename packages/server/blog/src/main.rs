@@ -5,7 +5,7 @@ use rocket::{serde::json::{serde_json::json, Value}, get, routes, http::Method};
 use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 use tracing_subscriber::layer::SubscriberExt;
 
-use api::{services::{Config, Postgres, Service, User, SecurePassword}, routes::{user_routes, self}};
+use api::{services::{Config, Postgres, Service, User, SecurePassword, Post}, routes::{user_routes, self}};
 use dotenv::dotenv;
 
 mod api;
@@ -44,13 +44,17 @@ async fn main() -> Result<(), rocket::Error> {
     let config_service = Service::<Config>::new();
     let postgres_service = Service::<Postgres>::new(config_service.postgres());
     let user_service = Service::<User>::new(postgres_service.new_pool());
+    let post_service = Service::<Post>::new(postgres_service.new_pool());
     // Routes
     let user_routes = api::routes::user_routes::routes();
+    let post_routes = api::routes::post_routes::routes();
     // Rocket
     let rocket = rocket::build()
         .mount("/", routes![api_index])
         .mount("/api/user", user_routes)
+        .mount("/api/post", post_routes)
         .attach(cors)
+        .manage(post_service)
         .manage(user_service)
         .ignite().await?
         .launch().await?;

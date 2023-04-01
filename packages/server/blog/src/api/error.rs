@@ -12,7 +12,7 @@ pub enum AccountError {
     PasswordViolation,
     UsernameTaken,
     EmailTaken,
-    RegistrationFailed,
+    RegistrationFailed, //hmm
     LoginFailed,
     UnknownError
 }
@@ -46,5 +46,18 @@ impl AccountError {
             }
         }
         return AccountError::UnknownError
+    }
+}
+
+#[derive(Debug)]
+pub enum PostError {
+    PostViolation,
+}
+
+impl fmt::Display for PostError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PostError::PostViolation => write!(f, "The specified post violates the format requirements."),
+        }
     }
 }

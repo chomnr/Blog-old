@@ -10,6 +10,7 @@ import 'react-quill/dist/quill.snow.css';
 
 export default function Page() {
   const [value, setValue] = useState('');
+
   return (
     <>
     <Navbar/>
