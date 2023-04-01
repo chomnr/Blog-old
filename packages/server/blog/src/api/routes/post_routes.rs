@@ -2,7 +2,6 @@ use base64::Engine;
 use base64::engine::general_purpose;
 use rocket::Route;
 use rocket::State;
-use rocket::data::Limits;
 use rocket::get;
 use rocket::http::CookieJar;
 use rocket::http::Status;

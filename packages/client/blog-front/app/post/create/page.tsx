@@ -3,27 +3,103 @@
 import { Metadata } from 'next'
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import Navbar  from "@/components/navbar"
+import Navbar from "@/components/navbar"
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import cookies from 'next-cookies'
+import React from 'react';
 
+function Page({ }) {
+  let url = "http://localhost:8000/api/post/create"
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+  })
 
-export default function Page() {
-  const [value, setValue] = useState('');
+  const [error, setErrorMessage] = useState({
+    message: ''
+  })
+
+  const handleSubmit = async (event: any) => {
+    event.preventDefault();
+    let res = await fetch(url, {
+      method: "POST",
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
+    let data = await res.json();
+    if (res.status === 200) {
+      console.log("Success: " + data["message"])
+      setErrorMessage({ message: data["message"] });
+    } else {
+      console.log("Failed: " + data["message"])
+      setErrorMessage({ message: data["message"] });
+    }
+  };
 
   return (
     <>
-    <Navbar/>
-    <div className='flex flex-col items-center bg-white h-fit pb-8 pt-8 text-black'>
-      <form className='flex flex-col space-y-3 items-center'>
-        <input className='p-3 w-[700px] text-[#000]' type='username' placeholder='Title' ></input>
-        <ReactQuill className='w-[700px] max-w-[700px] word-break' theme="snow" value={value} onChange={setValue} />
-        <button className='bg-[#4E192B] text-white p-1'>Create Post</button>
-      </form>
-    </div>
+      <Navbar />
+      <div className='flex flex-col items-center bg-white h-fit pb-8 pt-8 text-black'>
+        <form className='flex flex-col space-y-3 items-center' onSubmit={handleSubmit}>
+          <input className='p-3 w-[700px] text-[#000]' type='username' placeholder='Title' value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required></input>
+          <ReactQuill className='w-[700px] max-w-[700px] word-break' theme="snow" value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.toString() })} />
+          <div className="text-red-500 mt-2 text-sm">
+              {error.message}
+          </div>
+          <button className='bg-[#4E192B] text-white p-1'>Create Post</button>
+        </form>
+      </div>
     </>
   )
 }
+
+
+
+
+export default Page
+/*
+
+class Page extends React.Component {
+  constructor(props: any) {
+    super(props);
+    this.state = {
+      title: '',
+      content: ''
+    };
+  }
+
+  setTitle(value: string) {
+    this.setState({ title: value })
+  }
+
+  setContent(value: any) {
+    this.setState({ content: value })
+  }
+
+  render() {
+    return (
+      <>
+        <Navbar />
+        <div className='flex flex-col items-center bg-white h-fit pb-8 pt-8 text-black'>
+          <form className='flex flex-col space-y-3 items-center'>
+            <input className='p-3 w-[700px] text-[#000]' type='username' placeholder='Title' onChange={(e) => this.setTitle(e.target.value)} />
+            <ReactQuill
+            className='w-[700px] max-w-[700px] word-break'
+            theme="snow"
+            onChange={(e) => this.setTitle(e.valueOf.to)}
+          />
+            <button className='bg-[#4E192B] text-white p-1'>Create Post</button>
+          </form>
+        </div>
+      </>
+    )
+  }
+};
+*/
 
 /*
 
