@@ -17,7 +17,6 @@ export default function Page() {
     let res = await fetch(url, {
       method: "POST",
       credentials: 'include',
-      redirect: 'follow',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -26,7 +25,7 @@ export default function Page() {
     let data = await res.json();
     if (res.status === 200) {
       console.log("Success: " + data["message"])
-      //window.location.href = "/";
+      window.location.href = "/";
     } else {
       console.log("Failed: " + data["message"])
     }
@@ -37,7 +36,7 @@ export default function Page() {
     <div className='flex h-screen'>
       <div className='lg:flex md:hidden hidden bg-[#4E192B] w-3/6'>
           <div className='flex flex-row font-semibold m-3 text-2xl space-x-2'>
-            <span>BLOG</span>
+            <a href="/">BLOG</a>
             <span className='text-sm'>"Write something great."</span>
           </div>
       </div>
