@@ -13,6 +13,7 @@ Simple but scalable blog system written in Rust & React
 
 
 Table creation queries
+```sql
 CREATE TABLE posts (
     id SERIAL PRIMARY KEY,
     uid VARCHAR(255) NOT NULL,
@@ -33,3 +34,5 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     password_salt VARCHAR(255) NOT NULL
 );
+```
+
