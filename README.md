@@ -1,5 +1,5 @@
 # BLOG <br>
-Quick little one week project. I wanted to see if I was capable of making a simple blog in a week; And it might not be the best but that's alright. As least I got it done.
+Quick little one week project. I wanted to see if I was capable of making a simple blog in a week; And it might not be the best but that's alright. At least I got it done.
 
 The backend is written in rust.<br>
 The frontend is written in React.
