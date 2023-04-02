@@ -16,6 +16,10 @@ export default function Page() {
       .catch((error) => console.error(error));
   }, []);
 
+  function redirect(blog_id: any){
+    window.location.href = "/post/entries/" + blog_id;
+  }
+
   return (
     <>
     <Navbar/>
@@ -23,7 +27,7 @@ export default function Page() {
     <div className='flex flex-col items-center bg-white h-fit pb-8 '>
     {posts.map((post) => (
 
-      <div id={`blog-${post["blog_id"]}`} key={`blog-${post["blog_id"]}`} className='flex flex-col min-w-[500px] mt-3 pl-3 text-black hover:bg-[#F2F2F2] cursor-pointer'>
+      <div onClick={() => redirect(post["blog_id"])}  key={`blog-${post["blog_id"]}`} className='flex flex-col min-w-[500px] mt-3 pl-3 text-black hover:bg-[#F2F2F2] cursor-pointer'>
         <div className='flex flex-col p-1'>
             {post["author"]}
             <div className='flex flex-row font-bold'>

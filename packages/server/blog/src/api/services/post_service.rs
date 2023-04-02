@@ -106,6 +106,7 @@ impl Service<Post> {
             return Err(PostError::InvalidPostId);
         }
         let row = self.short_query(sql, &[&id]).await.unwrap();
+
         let uid: String = row[0].get(0);
         let title: String = row[0].get(1);
         let content: String = row[0].get(2);
