@@ -1,11 +1,11 @@
 # BLOG <br>
 Simple blog system.
 
-Frontend URLS
+## FRONTEND URLS
 {host}/auth/login<br>
 {host}/auth/register<br>
 {host}/post/entries<br>
-{host}/post/entries/<id>
+{host}/post/entries/{id}<br>
 
 ## ENDPOINTS
 
