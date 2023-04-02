@@ -3,8 +3,8 @@ Simple blog system.
 
 Frontend URLS
 {host}/auth/login<br>
-{host}/auth/register
-{host}/post/entries
+{host}/auth/register<br>
+{host}/post/entries<br>
 {host}/post/entries/<id>
 
 ## ENDPOINTS
