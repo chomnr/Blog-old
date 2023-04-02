@@ -1,5 +1,6 @@
 # BLOG <br>
-Simple blog system.
+Quick little one week project. I wanted to see if I was capable of making a simple blog in a week.
+And I was might not be the best but that's alright. As least I got it done.
 
 ## FRONTEND URLS
 {host}/auth/login<br>
@@ -41,4 +42,7 @@ CREATE TABLE users (
     password_salt VARCHAR(255) NOT NULL
 );
 ```
+
+## Images
+
 
