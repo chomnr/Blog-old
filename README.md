@@ -1,5 +1,5 @@
 # BLOG <br>
-Simple but scalable blog system written in Rust & React.
+Simple blog system.
 
 There could be XSS exploits.
 
