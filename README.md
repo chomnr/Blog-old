@@ -1,5 +1,13 @@
 # BLOG <br>
-Simple but scalable blog system written in Rust & React
+Simple but scalable blog system written in Rust & React.
+
+There could be XSS exploits.
+
+Frontend URLS
+{host}/auth/login<br>
+{host}/auth/register
+{host}/post/entries
+{host}/post/entries/<id>
 
 ## ENDPOINTS
 
