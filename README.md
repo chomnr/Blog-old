@@ -1,8 +1,6 @@
 # BLOG <br>
 Simple blog system.
 
-There could be XSS exploits.
-
 Frontend URLS
 {host}/auth/login<br>
 {host}/auth/register
