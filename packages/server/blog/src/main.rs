@@ -1,4 +1,3 @@
-#![feature(proc_macro_hygiene, decl_macro)]
 
 use std::sync::Arc;
 use rocket::{serde::json::{serde_json::json, Value}, get, routes, http::Method, data::{Limits, ToByteUnit}};
